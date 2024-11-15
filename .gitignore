@@ -1,0 +1,87 @@
+# C++ compiled files
+*.out
+*.o
+*.obj
+*.exe
+*.dll
+*.so
+*.dylib
+
+# CMake build directory
+/build/
+/CMakeFiles/
+/cmake-build-*/   # For multi-config generators (e.g., cmake-build-debug, cmake-build-release)
+CMakeCache.txt
+Makefile
+*.cmake
+*.dir
+
+# Executables (and related files like .pdb for Visual Studio)
+*.exe
+*.pdb
+*.ilk
+*.lib
+*.a
+
+# IDEs and editors
+# Visual Studio
+.vscode/
+.vscode/*
+*.vcxproj
+*.vcxproj.user
+*.vcxproj.filters
+*.sln
+*.suo
+*.ncb
+*.aps
+*.psess
+*.pdb
+*.ipch
+*.db
+*.opendb
+*.tlog/
+*.lastbuildstate
+*.vcxproj.filters
+
+# CLion
+.idea/
+cmake-build-debug/
+cmake-build-release/
+
+# Code::Blocks
+*.layout
+*.cbp
+*.depend
+
+# Xcode
+*.xcodeproj
+*.xcworkspace
+xcuserdata/
+profile
+
+# Qt Creator
+*.pro.user
+*.user.*
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Logs and databases
+*.log
+*.sqlite
+
+# Temporary files
+*.swp
+*~
+
+# Binary and archive files
+*.a
+*.lib
+*.dylib
+*.jar
+*.zip
+*.tar.gz
+*.rar
+*.7z
+*.gz
