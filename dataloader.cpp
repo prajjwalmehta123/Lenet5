@@ -114,7 +114,7 @@ void dataloader::preprocess_data() {
     }
 }
 
-std::pair<std::vector<float>, std::vector<int>> dataloader::get_batch() {
+pair<vector<vector<float>>, vector<int>> dataloader::get_batch() {
     if (current_batch_index >= num_batches) {
         std::cerr << "All batches have been processed. Please reset the dataloader." << std::endl;
         exit(1);
@@ -123,15 +123,15 @@ std::pair<std::vector<float>, std::vector<int>> dataloader::get_batch() {
     int start_index = current_batch_index * batch_size;
     int end_index = start_index + batch_size;
 
-    std::vector<float> batch_images;
+    vector<vector<float>> batch_images;
     std::vector<int> batch_labels;
-    int image_size = images[0].size();
 
-    batch_images.reserve(batch_size * image_size);
+    batch_images.reserve(batch_size);
     batch_labels.reserve(batch_size);
 
     for (int i = start_index; i < end_index; ++i) {
-        batch_images.insert(batch_images.end(), images[i].begin(), images[i].end());
+        //batch_images.insert(batch_images.end(), images[i].begin(), images[i].end());
+        batch_images.push_back(images[i]);
         batch_labels.push_back(labels[i]);
     }
 

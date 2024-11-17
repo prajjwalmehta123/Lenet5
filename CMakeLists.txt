@@ -7,7 +7,8 @@ set(CMAKE_CXX_STANDARD 20)
 
 find_package(OpenMP REQUIRED)
 # add_executable(lenet5 main.cpp dataloader.cpp)
-add_executable(lenet5 main.cpp lenet5.cpp dataloader.cpp FCLayer.cpp)
+add_executable(lenet5 main.cpp lenet5.cpp dataloader.cpp FCLayer.cpp
+        conv.cpp)
 
 if(OpenMP_CXX_FOUND)
     target_link_libraries(lenet5 PUBLIC OpenMP::OpenMP_CXX)
