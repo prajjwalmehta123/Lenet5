@@ -15,13 +15,26 @@ static uint32_t swap_endian(uint32_t val) {
            ((val << 24) & 0xFF000000);
 }
 
+std::vector<float> padFlattenedImage(const std::vector<float>& image, size_t original_width, size_t padding) {
+    size_t padded_width = original_width + 2 * padding;
+    size_t padded_size = padded_width * padded_width;
+    std::vector<float> padded_image(padded_size, 0.0f);
+    for (size_t i = 0; i < original_width; ++i) {
+        for (size_t j = 0; j < original_width; ++j) {
+            size_t original_index = i * original_width + j;
+            size_t padded_index = (i + padding) * padded_width + (j + padding);
+            padded_image[padded_index] = image[original_index];
+        }
+    }
+    return padded_image;
+}
+
 dataloader::dataloader(const std::string& images_path, const std::string& labels_path, int batch_size, bool shuffle)
     : images_path(images_path), labels_path(labels_path), batch_size(batch_size), shuffle(shuffle), current_batch_index(0)
 {
     load_data();
     preprocess_data();
     num_batches = images.size() / batch_size;
-    pad_images(2);
     if (shuffle) {
         shuffle_data();
     }
@@ -56,6 +69,8 @@ void dataloader::load_data() {
         for (int j = 0; j < image_size; ++j) {
             images[i][j] = static_cast<float>(buffer[j]);
         }
+        // Add Padding
+        images[i] = padFlattenedImage(images[i], num_cols, 2);
     }
     image_file.close();
 
@@ -130,7 +145,7 @@ void dataloader::shuffle_data() {
 
     std::random_device rd;
     std::mt19937 g(rd());
-    std::shuffle(indices.begin(), indices.end(), g);
+    std::ranges::shuffle(indices, g);
 
     std::vector<std::vector<float>> shuffled_images(images.size());
     std::vector<int> shuffled_labels(labels.size());
@@ -139,7 +154,6 @@ void dataloader::shuffle_data() {
         shuffled_images[i] = images[indices[i]];
         shuffled_labels[i] = labels[indices[i]];
     }
-
     images = std::move(shuffled_images);
     labels = std::move(shuffled_labels);
 }
@@ -148,26 +162,6 @@ void dataloader::reset() {
     current_batch_index = 0;
     if (shuffle) {
         shuffle_data();
-    }
-}
-
-void dataloader::pad_images(int padding) {
-    int original_size = static_cast<int>(std::sqrt(images[0].size()));
-    int new_size = original_size + 2 * padding;
-    
-    #pragma omp parallel for
-    for (auto& image : images) {
-        std::vector<float> padded_image(new_size * new_size, 0.0f);
-
-        for (int row = 0; row < original_size; ++row) {
-            for (int col = 0; col < original_size; ++col) {
-                int original_index = row * original_size + col;
-                int padded_index = (row + padding) * new_size + (col + padding);
-                padded_image[padded_index] = image[original_index];
-            }
-        }
-        #pragma omp critical
-        image = std::move(padded_image);
     }
 }
 

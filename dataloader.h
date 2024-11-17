@@ -21,7 +21,6 @@ public:
     std::pair<std::vector<float>, std::vector<int>> get_batch();
     void shuffle_data();
     void reset();
-    void pad_images(int padding);
     void print_images();
 };
 
