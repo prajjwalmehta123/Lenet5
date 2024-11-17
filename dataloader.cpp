@@ -21,6 +21,7 @@ dataloader::dataloader(const std::string& images_path, const std::string& labels
     load_data();
     preprocess_data();
     num_batches = images.size() / batch_size;
+    pad_images(2);
     if (shuffle) {
         shuffle_data();
     }
@@ -147,6 +148,39 @@ void dataloader::reset() {
     current_batch_index = 0;
     if (shuffle) {
         shuffle_data();
+    }
+}
+
+void dataloader::pad_images(int padding) {
+    int original_size = static_cast<int>(std::sqrt(images[0].size()));
+    int new_size = original_size + 2 * padding;
+    
+    #pragma omp parallel for
+    for (auto& image : images) {
+        std::vector<float> padded_image(new_size * new_size, 0.0f);
+
+        for (int row = 0; row < original_size; ++row) {
+            for (int col = 0; col < original_size; ++col) {
+                int original_index = row * original_size + col;
+                int padded_index = (row + padding) * new_size + (col + padding);
+                padded_image[padded_index] = image[original_index];
+            }
+        }
+        #pragma omp critical
+        image = std::move(padded_image);
+    }
+}
+
+void dataloader::print_images() {
+    int num_images = images.size();
+    int image_size = images[0].size();
+
+    for (size_t idx = 0; idx < num_images; ++idx) {
+        std::cout << "Image " << idx + 1 << ":" << std::endl;
+        for (int row = 0; row < image_size; ++row) {
+                std::cout << images[idx][row] << " ";
+        }
+        std::cout << std::endl;
     }
 }
 

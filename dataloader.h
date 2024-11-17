@@ -9,6 +9,7 @@ private:
     int batch_size{};                             // Number of samples per batch
     int num_batches{};                            // Total number of batches per epoch
     int current_batch_index{};                    // Current batch index in the epoch
+    int padding{};
     bool shuffle{};                               // Flag to shuffle dataset before each epoch
     std::string images_path;
     std::string labels_path;
@@ -20,6 +21,8 @@ public:
     std::pair<std::vector<float>, std::vector<int>> get_batch();
     void shuffle_data();
     void reset();
+    void pad_images(int padding);
+    void print_images();
 };
 
 
