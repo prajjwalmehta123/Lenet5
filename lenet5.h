@@ -5,10 +5,12 @@
 #include <string>
 #include <map>
 #include "FCLayer.h"
+#include "conv.h"
 
 class LeNet5 {
 private:
     FCLayer F6; // Fully connected layer
+    ConvolutionLayer convLayer;
 
     // Kernel shapes for various layers
     std::map<std::string, std::vector<int>> kernel_shape = {
@@ -18,20 +20,22 @@ private:
         {"F6", {120, 84}},
         {"OUTPUT", {84, 10}}
     };
+    int imageHeight = 32;  // 32x32 images (already padded)
+    int imageWidth = 32;
 
     // Hyperparameters
     std::map<std::string, int> hparameters_convlayer = {{"stride", 1}, {"pad", 0}};
     std::map<std::string, int> hparameters_pooling = {{"stride", 2}, {"f", 2}};
 
     // Label for caching during forward propagation
-    std::vector<float> label;
+    // std::vector<int> batch_labels;
 
 public:
     // Constructor
     LeNet5();
 
     // Forward propagation
-    auto Forward_Propagation(const std::vector<float>& input_image, const std::vector<float>& input_label, const std::string& mode);
+    void Forward_Propagation(std::vector<std::vector<float>> batch_images, std::vector<int>batch_labels);
 
     // Back propagation
     void Back_Propagation(float momentum, float weight_decay);
@@ -41,6 +45,7 @@ public:
 
     // Initialize weights
     std::pair<std::vector<std::vector<float>>, std::vector<float>> initialize_weights(std::vector<int> kernel_shape);
+    std::vector<std::vector<float>> flattenTensor(const std::vector<std::vector<std::vector<std::vector<float>>>>& a3_FP);
 };
 
 #endif // LENET5_H

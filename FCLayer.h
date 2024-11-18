@@ -27,6 +27,7 @@ private:
         float lr, float momentum, float weight_decay);
 
 public:
+    FCLayer();
     // Constructor: Initialize layer with weight dimensions and initialization mode
     FCLayer(const std::pair<int, int>& weight_shape, const std::string& init_mode = "Gaussian_dist");
 

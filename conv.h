@@ -10,6 +10,7 @@ class GPUComputations; // Forward declaration
 
 class ConvolutionLayer {
 public:
+    ConvolutionLayer();
     int outputChannels;
     ConvolutionLayer(int inputChannels, int outputChannels, int kernelSize, int stride = 1, int padding = 0);
     std::vector<std::vector<float>> forward(const std::vector<std::vector<float>>& inputBatch, int imageHeight, int imageWidth);

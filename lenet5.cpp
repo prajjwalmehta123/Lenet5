@@ -1,13 +1,10 @@
 #include "lenet5.h"
 #include <iostream>
 #include <random>
+#include "conv.h"
 
 // Constructor
-LeNet5::LeNet5(): F6({120, 84}, "Gaussian_dist") {
-
-    // Initialize F6 after kernel_shape is fully initialized
-    // F6 = FCLayer({kernel_shape["F6"][0], kernel_shape["F6"][1]});
-
+LeNet5::LeNet5(){
     for (const auto& pair : kernel_shape) {
         std::cout << pair.first << ": ";
         for (const auto& val : pair.second) {
@@ -15,25 +12,33 @@ LeNet5::LeNet5(): F6({120, 84}, "Gaussian_dist") {
         }
         std::cout << std::endl;
     }
+    int stride = 1;
+    int padding = 0;
+    ConvolutionLayer convLayer(kernel_shape["C1"][2], kernel_shape["C1"][3], kernel_shape["C1"][0], hparameters_convlayer["stride"], hparameters_convlayer["padding"]);
+    int imageHeight = 32;  // 32x32 images (already padded)
+    int imageWidth = 32;
+    F6 = FCLayer({kernel_shape["F6"][0], kernel_shape["F6"][1]});
+    
+}
 
-    // Print hyperparameters for convolutional layer
-    std::cout << "\nHyperparameters (Convolutional Layer):" << std::endl;
-    for (const auto& pair : hparameters_convlayer) {
-        std::cout << pair.first << ": " << pair.second << std::endl;
-    }
+std::vector<std::vector<float>> LeNet5::flattenTensor(const std::vector<std::vector<std::vector<std::vector<float>>>>& a3_FP) {
+    size_t batchSize = a3_FP.size();
+    size_t channels = a3_FP[0][0][0].size();
+    std::vector<std::vector<float>> flattened(batchSize, std::vector<float>(channels));
 
-    // Print hyperparameters for pooling
-    std::cout << "\nHyperparameters (Pooling):" << std::endl;
-    for (const auto& pair : hparameters_pooling) {
-        std::cout << pair.first << ": " << pair.second << std::endl;
+    for (size_t i = 0; i < batchSize; ++i) {
+        for (size_t c = 0; c < channels; ++c) {
+            flattened[i][c] = a3_FP[i][0][0][c];
+        }
     }
+    return flattened;
 }
 
 // Forward Propagation
-auto LeNet5::Forward_Propagation(const std::vector<float>& input_image, const std::vector<float>& input_label, const std::string& mode) {
-    // label = input_label; // Cache label for backpropagation
-    // int out = 1;         // Placeholder return value
-    // return out;
+void LeNet5::Forward_Propagation(std::vector<std::vector<float>> batch_images, std::vector<int>batch_labels) {
+    std::vector<std::vector<float>> outputBatch = convLayer.forward(batch_images, imageHeight, imageWidth);
+    // std::vector<std::vector<float>> flattened = flattenTensor(a3_FP);
+    // F6.forward_prop(flattened);
 }
 
 // Back Propagation

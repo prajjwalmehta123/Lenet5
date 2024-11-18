@@ -2,6 +2,8 @@
 #include <cmath>
 #include <random>
 
+ConvolutionLayer::ConvolutionLayer(){}
+
 ConvolutionLayer::ConvolutionLayer(int inputChannels, int outputChannels, int kernelSize, int stride, int padding)
     : inputChannels(inputChannels), outputChannels(outputChannels), kernelSize(kernelSize), stride(stride), padding(padding) {
     initializeWeights();

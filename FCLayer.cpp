@@ -4,9 +4,12 @@
 #include <cmath>
 #include "FCLayer.h"
 
+// Default Constructor
+FCLayer::FCLayer() {}
+
 // Constructor
 FCLayer::FCLayer(const std::pair<int, int>& weight_shape, const std::string& init_mode) {
-    std::cout<<"FCLAYER";
+    // std::cout<<"FCLAYER";
     int rows = weight_shape.first;
     int cols = weight_shape.second;
 
