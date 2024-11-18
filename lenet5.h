@@ -6,6 +6,7 @@
 #include <map>
 #include "FCLayer.h"
 #include "conv.h"
+#include "activation.h"
 
 class LeNet5 {
 private:
@@ -46,6 +47,7 @@ public:
     // Initialize weights
     std::pair<std::vector<std::vector<float>>, std::vector<float>> initialize_weights(std::vector<int> kernel_shape);
     std::vector<std::vector<float>> flattenTensor(const std::vector<std::vector<std::vector<std::vector<float>>>>& a3_FP);
+    std::vector<int> LeNet5::Output_Layer(std::vector<std::vector<float>> X);
 };
 
 #endif // LENET5_H

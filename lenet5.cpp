@@ -2,6 +2,7 @@
 #include <iostream>
 #include <random>
 #include "conv.h"
+#include "activation.h"
 
 // Constructor
 LeNet5::LeNet5(){
@@ -18,7 +19,7 @@ LeNet5::LeNet5(){
     int imageHeight = 32;  // 32x32 images (already padded)
     int imageWidth = 32;
     F6 = FCLayer({kernel_shape["F6"][0], kernel_shape["F6"][1]});
-    
+
 }
 
 std::vector<std::vector<float>> LeNet5::flattenTensor(const std::vector<std::vector<std::vector<std::vector<float>>>>& a3_FP) {
@@ -37,8 +38,9 @@ std::vector<std::vector<float>> LeNet5::flattenTensor(const std::vector<std::vec
 // Forward Propagation
 void LeNet5::Forward_Propagation(std::vector<std::vector<float>> batch_images, std::vector<int>batch_labels) {
     std::vector<std::vector<float>> outputBatch = convLayer.forward(batch_images, imageHeight, imageWidth);
-    // std::vector<std::vector<float>> flattened = flattenTensor(a3_FP);
-    // F6.forward_prop(flattened);
+    std::vector<std::vector<float>> flattened = flattenTensor(a3_FP);
+    f6_FP = F6.forward_prop(flattened);
+    Output_Layer(f6_FP)
 }
 
 // Back Propagation
@@ -50,6 +52,27 @@ void LeNet5::Back_Propagation(float momentum, float weight_decay) {
 void LeNet5::SDLM(float mu, float lr_global) {
     // Placeholder for SDLM logic
 }
+
+std::vector<int> LeNet5::Output_Layer(std::vector<std::vector<float>> X){
+    int inp = kernel_shape["OUTPUT"][0];
+    int out = kernel_shape["OUTPUT"][1];
+    std::vector<int> Y(out);
+    for (int i = 0; i < inp; i++) {
+        int max_idx = 0;
+        float max_val = X[i][max_idx];
+        for (int j = 1; j < out; j++) {
+            float elem = X[i][j];
+            if (elem > max_val) {
+                max_idx = j;
+                max_val = elem;
+            }
+        }
+        // Assign the index of the maximum value to the output
+        Y[i] = max_idx;
+    }
+    return Y;
+}
+
 
 // Initialize weights
 std::pair<std::vector<std::vector<float>>, std::vector<float>> LeNet5::initialize_weights(std::vector<int> kernel_shape) {
