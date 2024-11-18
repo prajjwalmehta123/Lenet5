@@ -7,11 +7,13 @@
 #include "FCLayer.h"
 #include "conv.h"
 #include "activation.h"
+#include "subsampling.h"
 
 class LeNet5 {
 private:
     FCLayer F6; // Fully connected layer
-    ConvolutionLayer convLayer;
+    ConvolutionLayer c1_layer,c3_layer;
+    subsampling s2_layer,s4_layer;
 
     // Kernel shapes for various layers
     std::map<std::string, std::vector<int>> kernel_shape = {
@@ -21,7 +23,7 @@ private:
         {"F6", {120, 84}},
         {"OUTPUT", {84, 10}}
     };
-    int imageHeight = 32;  // 32x32 images (already padded)
+    int imageHeight = 32;
     int imageWidth = 32;
 
     // Hyperparameters
@@ -47,7 +49,7 @@ public:
     // Initialize weights
     std::pair<std::vector<std::vector<float>>, std::vector<float>> initialize_weights(std::vector<int> kernel_shape);
     std::vector<std::vector<float>> flattenTensor(const std::vector<std::vector<std::vector<std::vector<float>>>>& a3_FP);
-    std::vector<int> LeNet5::Output_Layer(std::vector<std::vector<float>> X);
+    std::vector<int> Output_Layer(std::vector<std::vector<float>> X);
 };
 
 #endif // LENET5_H

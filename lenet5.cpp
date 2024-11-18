@@ -1,8 +1,6 @@
 #include "lenet5.h"
 #include <iostream>
 #include <random>
-#include "conv.h"
-#include "activation.h"
 
 // Constructor
 LeNet5::LeNet5(){
@@ -13,11 +11,10 @@ LeNet5::LeNet5(){
         }
         std::cout << std::endl;
     }
-    int stride = 1;
-    int padding = 0;
-    ConvolutionLayer convLayer(kernel_shape["C1"][2], kernel_shape["C1"][3], kernel_shape["C1"][0], hparameters_convlayer["stride"], hparameters_convlayer["padding"]);
-    int imageHeight = 32;  // 32x32 images (already padded)
-    int imageWidth = 32;
+    c1_layer = ConvolutionLayer(kernel_shape["C1"][2], kernel_shape["C1"][3], kernel_shape["C1"][0], hparameters_convlayer["stride"], hparameters_convlayer["padding"]);
+    //ConvolutionLayer convLayer(kernel_shape["C1"][2], kernel_shape["C1"][3], kernel_shape["C1"][0], hparameters_convlayer["stride"], hparameters_convlayer["padding"]);
+    s2_layer = subsampling(hparameters_pooling["f"],hparameters_pooling["stride"],kernel_shape["C1"][3]);
+    //subsampling s2_layer(hparameters_pooling["f"],hparameters_pooling["stride"]);
     F6 = FCLayer({kernel_shape["F6"][0], kernel_shape["F6"][1]});
 
 }
@@ -37,10 +34,12 @@ std::vector<std::vector<float>> LeNet5::flattenTensor(const std::vector<std::vec
 
 // Forward Propagation
 void LeNet5::Forward_Propagation(std::vector<std::vector<float>> batch_images, std::vector<int>batch_labels) {
-    std::vector<std::vector<float>> outputBatch = convLayer.forward(batch_images, imageHeight, imageWidth);
-    std::vector<std::vector<float>> flattened = flattenTensor(a3_FP);
-    f6_FP = F6.forward_prop(flattened);
-    Output_Layer(f6_FP)
+    std::vector<std::vector<float>> c1_out = c1_layer.forward(batch_images, imageHeight, imageWidth);
+    std::vector<std::vector<float>> s2_out = s2_layer.average_pooling(c1_out);
+    // std::vector<std::vector<float>> flattened = flattenTensor(a3_FP);
+    // F6.forward_prop(flattened);
+    //std::vector<std::vector<float>> f6_FP = F6.forward_prop(flattened);
+    //Output_Layer(f6_FP)
 }
 
 // Back Propagation
