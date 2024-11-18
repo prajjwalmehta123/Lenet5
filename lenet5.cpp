@@ -12,33 +12,37 @@ LeNet5::LeNet5(){
         std::cout << std::endl;
     }
     c1_layer = ConvolutionLayer(kernel_shape["C1"][2], kernel_shape["C1"][3], kernel_shape["C1"][0], hparameters_convlayer["stride"], hparameters_convlayer["padding"]);
+    a1 = Activation();
     //ConvolutionLayer convLayer(kernel_shape["C1"][2], kernel_shape["C1"][3], kernel_shape["C1"][0], hparameters_convlayer["stride"], hparameters_convlayer["padding"]);
     s2_layer = subsampling(hparameters_pooling["f"],hparameters_pooling["stride"],kernel_shape["C1"][3]);
     //subsampling s2_layer(hparameters_pooling["f"],hparameters_pooling["stride"]);
-    F6 = FCLayer({kernel_shape["F6"][0], kernel_shape["F6"][1]});
-
-}
-
-std::vector<std::vector<float>> LeNet5::flattenTensor(const std::vector<std::vector<std::vector<std::vector<float>>>>& a3_FP) {
-    size_t batchSize = a3_FP.size();
-    size_t channels = a3_FP[0][0][0].size();
-    std::vector<std::vector<float>> flattened(batchSize, std::vector<float>(channels));
-
-    for (size_t i = 0; i < batchSize; ++i) {
-        for (size_t c = 0; c < channels; ++c) {
-            flattened[i][c] = a3_FP[i][0][0][c];
-        }
-    }
-    return flattened;
+    c3_layer = ConvolutionLayer(kernel_shape["C3"][2], kernel_shape["C3"][3], kernel_shape["C3"][0], hparameters_convlayer["stride"], hparameters_convlayer["padding"]);
+    a2 = Activation();
+    s4_layer = subsampling(hparameters_pooling["f"],hparameters_pooling["stride"],kernel_shape["C3"][3]);
+    f5_layer = FCLayer({kernel_shape["F5"][0], kernel_shape["F5"][1]});
+    a3 = Activation();
+    f6_layer = FCLayer({kernel_shape["F6"][0], kernel_shape["F6"][1]});
+    a4 = Activation();
+    o1 = OutputLayer({kernel_shape["OUTPUT"][0], kernel_shape["OUTPUT"][1]});
 }
 
 // Forward Propagation
 void LeNet5::Forward_Propagation(std::vector<std::vector<float>> batch_images, std::vector<int>batch_labels) {
     std::vector<std::vector<float>> c1_out = c1_layer.forward(batch_images, imageHeight, imageWidth);
-    std::vector<std::vector<float>> s2_out = s2_layer.average_pooling(c1_out);
-    // std::vector<std::vector<float>> flattened = flattenTensor(a3_FP);
-    // F6.forward_prop(flattened);
-    //std::vector<std::vector<float>> f6_FP = F6.forward_prop(flattened);
+    std::vector<std::vector<float>> a1_out = a1.forwardProp(c1_out);
+    std::vector<std::vector<float>> s2_out = s2_layer.average_pooling(a1_out);
+    std::vector<std::vector<float>> c3_out = c3_layer.forward(batch_images, imageHeight, imageWidth);
+    std::vector<std::vector<float>> a2_out = a2.forwardProp(c3_out);
+    std::vector<std::vector<float>> s4_out = s4_layer.average_pooling(a2_out);
+    std::vector<std::vector<float>> f5_out = f5_layer.forward_prop(s4_out);
+    std::vector<std::vector<float>> a3_out = a3.forwardProp(f5_out);
+    std::vector<std::vector<float>> f6_out = f6_layer.forward_prop(a3_out);
+    std::vector<std::vector<float>> a4_out = a4.forwardProp(f6_out);
+    std::vector<std::vector<float>> o1_out = o1.forwardProp(a4_out);
+    std::vector<int> labels = Output_Layer(o1_out);
+    for(int i = 0; i< labels.size();i++){
+        std::cout<<labels[i]<<endl;
+    }
     //Output_Layer(f6_FP)
 }
 
