@@ -19,6 +19,7 @@ std::vector<std::vector<float>> subsampling::average_pooling(vector<vector<float
     int pooled_ht = (featureHeight - kernel_size) / stride + 1;
     int pooled_wdth = (featureWidth - kernel_size) / stride + 1;
     int pooledFeatureSize = pooled_ht * pooled_wdth;
+    output_image_size = pooled_ht;
     int totalOutputSize = image_kernel_size * pooledFeatureSize;
 
     std::vector<std::vector<float>> output(batch_size, std::vector<float>(totalOutputSize, 0.0f));

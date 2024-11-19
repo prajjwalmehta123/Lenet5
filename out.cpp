@@ -21,14 +21,14 @@ OutputLayer::OutputLayer(int inputSize, int outputSize)
 // Forward pass through the output layer
 std::vector<std::vector<float>> OutputLayer::forwardProp(const std::vector<std::vector<float>>& input) {
     size_t batchSize = input.size();      // Number of samples (60000)
-    size_t numOutputs = weights.size();  // Number of output neurons (10)
+    size_t numOutputs = weights[0].size();  // Number of output neurons (10)
     std::vector<std::vector<float>> z(batchSize, std::vector<float>(numOutputs, 0.0f));
     std::vector<std::vector<float>> output(batchSize, std::vector<float>(numOutputs, 0.0f));
 
     // Compute z = W * input + b for each sample
     for (size_t sample = 0; sample < batchSize; ++sample) {
         for (size_t i = 0; i < numOutputs; ++i) {
-            for (size_t j = 0; j < weights[i].size(); ++j) {
+            for (size_t j = 0; j < weights.size(); ++j) {
                 z[sample][i] += weights[i][j] * input[sample][j];
             }
             z[sample][i] += biases[i]; // Add bias

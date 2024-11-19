@@ -26,7 +26,7 @@ std::vector<std::vector<float>> FCLayer::forward_prop(const std::vector<std::vec
     this->input_array = input_array; // Cache input for backpropagation
 
     int batch_size = input_array.size();
-    int output_size = weight[0].size();
+    int output_size = weight.size();
 
     // Compute output = input_array * weight + bias
     std::vector<std::vector<float>> output(batch_size, std::vector<float>(output_size, 0.0f));

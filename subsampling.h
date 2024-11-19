@@ -6,6 +6,7 @@
 using namespace std;
 class subsampling {
     public:
+        int output_image_size;
         subsampling();
         subsampling(int kernel_size,int stride, int image_kernel_size);
         std::vector<std::vector<float>> average_pooling(std::vector<std::vector<float>> inputBatch);

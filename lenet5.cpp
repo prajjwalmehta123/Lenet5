@@ -31,7 +31,7 @@ void LeNet5::Forward_Propagation(std::vector<std::vector<float>> batch_images, s
     std::vector<std::vector<float>> c1_out = c1_layer.forward(batch_images, imageHeight, imageWidth);
     std::vector<std::vector<float>> a1_out = a1.forwardProp(c1_out);
     std::vector<std::vector<float>> s2_out = s2_layer.average_pooling(a1_out);
-    std::vector<std::vector<float>> c3_out = c3_layer.forward(batch_images, imageHeight, imageWidth);
+    std::vector<std::vector<float>> c3_out = c3_layer.forward(s2_out, s2_layer.output_image_size, s2_layer.output_image_size);
     std::vector<std::vector<float>> a2_out = a2.forwardProp(c3_out);
     std::vector<std::vector<float>> s4_out = s4_layer.average_pooling(a2_out);
     std::vector<std::vector<float>> f5_out = f5_layer.forward_prop(s4_out);
@@ -39,10 +39,14 @@ void LeNet5::Forward_Propagation(std::vector<std::vector<float>> batch_images, s
     std::vector<std::vector<float>> f6_out = f6_layer.forward_prop(a3_out);
     std::vector<std::vector<float>> a4_out = a4.forwardProp(f6_out);
     std::vector<std::vector<float>> o1_out = o1.forwardProp(a4_out);
-    std::vector<int> labels = Output_Layer(o1_out);
+    std::vector<int> labels = Output_Layer(o1_out,batch_images.size());
+    int correct = 0;
     for(int i = 0; i< labels.size();i++){
-        std::cout<<labels[i]<<endl;
+        if (labels[i] == batch_labels[i]) {
+            correct++;
+        }
     }
+    std::cout<<"Batch Processed, Number of correct: "<<correct<<std::endl; ;
     //Output_Layer(f6_FP)
 }
 
@@ -56,14 +60,13 @@ void LeNet5::SDLM(float mu, float lr_global) {
     // Placeholder for SDLM logic
 }
 
-std::vector<int> LeNet5::Output_Layer(std::vector<std::vector<float>> X){
+std::vector<int> LeNet5::Output_Layer(std::vector<std::vector<float>> X,int outsize){
     int inp = kernel_shape["OUTPUT"][0];
-    int out = kernel_shape["OUTPUT"][1];
-    std::vector<int> Y(out);
-    for (int i = 0; i < inp; i++) {
+    std::vector<int> Y(outsize,0);
+    for (int i = 0; i < outsize; i++) {
         int max_idx = 0;
         float max_val = X[i][max_idx];
-        for (int j = 1; j < out; j++) {
+        for (int j = 1; j < inp; j++) {
             float elem = X[i][j];
             if (elem > max_val) {
                 max_idx = j;

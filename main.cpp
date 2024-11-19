@@ -29,7 +29,11 @@ int main()
                 return 1;
         }
         dataloader dataloader(mnist_image_path,mnist_label_path,32);
-        auto x =dataloader.get_batch();
         LeNet5 lenet;
-        lenet.Forward_Propagation(x.first, x.second);
+        for(int i = 0; i<dataloader.num_batches;i++) {
+                auto x =dataloader.get_batch();
+                lenet.Forward_Propagation(x.first, x.second);
+                //break;
+        }
+
 }

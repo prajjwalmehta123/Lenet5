@@ -8,7 +8,7 @@ private:
     vector<vector<float>> images;     // Store images as flattened vectors
     vector<int> labels;                    // Store labels as integer vectors
     int batch_size{};                             // Number of samples per batch
-    int num_batches{};                            // Total number of batches per epoch
+    //int num_batches{};                            // Total number of batches per epoch
     int current_batch_index{};                    // Current batch index in the epoch
     int padding{};
     bool shuffle{};                               // Flag to shuffle dataset before each epoch
@@ -16,6 +16,7 @@ private:
     string labels_path;
 
 public:
+    int num_batches{};
     dataloader(const string& images_path, const string& labels_path, int batch_size, bool shuffle = true);
     void load_data();
     void preprocess_data();
