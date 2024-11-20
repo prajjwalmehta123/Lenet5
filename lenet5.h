@@ -53,6 +53,7 @@ public:
     // Initialize weights
     std::pair<std::vector<std::vector<float>>, std::vector<float>> initialize_weights(std::vector<int> kernel_shape);
     std::vector<int> Output_Layer(std::vector<std::vector<float>> X, int outsize);
+    void printShape(const std::vector<std::vector<float>>& tensor, const std::string& name);
 };
 
 #endif // LENET5_H

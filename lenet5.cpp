@@ -29,35 +29,71 @@ LeNet5::LeNet5(){
 // Forward Propagation
 void LeNet5::Forward_Propagation(std::vector<std::vector<float>> batch_images, std::vector<int>batch_labels) {
     std::vector<std::vector<float>> c1_out = c1_layer.forward(batch_images, imageHeight, imageWidth);
+    printShape(c1_out, "c1_out");
     std::vector<std::vector<float>> a1_out = a1.forwardProp(c1_out);
+    printShape(a1_out, "a1_out");
     std::vector<std::vector<float>> s2_out = s2_layer.average_pooling(a1_out);
+    printShape(s2_out, "s2_out");
     std::vector<std::vector<float>> c3_out = c3_layer.forward(s2_out, s2_layer.output_image_size, s2_layer.output_image_size);
+    printShape(c3_out, "c3_out");
     std::vector<std::vector<float>> a2_out = a2.forwardProp(c3_out);
+    printShape(a2_out, "a2_out");
     std::vector<std::vector<float>> s4_out = s4_layer.average_pooling(a2_out);
+    printShape(s4_out, "s4_out");
     std::vector<std::vector<float>> f5_out = f5_layer.forward_prop(s4_out);
+    printShape(f5_out, "f5_out");
     std::vector<std::vector<float>> a3_out = a3.forwardProp(f5_out);
+    printShape(a3_out, "a3_out");
     std::vector<std::vector<float>> f6_out = f6_layer.forward_prop(a3_out);
+    printShape(f6_out, "f6_out");
     std::vector<std::vector<float>> a4_out = a4.forwardProp(f6_out);
+    printShape(a4_out, "a4_out");
     std::vector<std::vector<float>> o1_out = o1.forwardProp(a4_out);
+    printShape(o1_out, "o1_out");
     std::vector<int> labels = Output_Layer(o1_out,batch_images.size());
+    std::cout<<"Label size: "<<labels.size();
     int correct = 0;
     for(int i = 0; i< labels.size();i++){
         if (labels[i] == batch_labels[i]) {
             correct++;
         }
     }
-    std::cout<<"Batch Processed, Number of correct: "<<correct<<std::endl; ;
-    //Output_Layer(f6_FP)
+    std::cout<<"Batch Processed, Number of correct: "<<correct<<std::endl;
 }
 
 // Back Propagation
 void LeNet5::Back_Propagation(float momentum, float weight_decay) {
-    // Placeholder for backpropagation logic
-}
-
-// Stochastic Diagonal Levenberg-Marquardt (SDLM)
-void LeNet5::SDLM(float mu, float lr_global) {
-    // Placeholder for SDLM logic
+    // std::vector<std::vector<float>> c1_out = c1_layer.forward(batch_images, imageHeight, imageWidth);
+    // printShape(c1_out, "c1_out");
+    // std::vector<std::vector<float>> a1_out = a1.forwardProp(c1_out);
+    // printShape(a1_out, "a1_out");
+    // std::vector<std::vector<float>> s2_out = s2_layer.average_pooling(a1_out);
+    // printShape(s2_out, "s2_out");
+    // std::vector<std::vector<float>> c3_out = c3_layer.forward(s2_out, s2_layer.output_image_size, s2_layer.output_image_size);
+    // printShape(c3_out, "c3_out");
+    // std::vector<std::vector<float>> a2_out = a2.forwardProp(c3_out);
+    // printShape(a2_out, "a2_out");
+    // std::vector<std::vector<float>> s4_out = s4_layer.average_pooling(a2_out);
+    // printShape(s4_out, "s4_out");
+    // std::vector<std::vector<float>> f5_out = f5_layer.forward_prop(s4_out);
+    // printShape(f5_out, "f5_out");
+    // std::vector<std::vector<float>> a3_out = a3.forwardProp(f5_out);
+    // printShape(a3_out, "a3_out");
+    // std::vector<std::vector<float>> f6_out = f6_layer.forward_prop(a3_out);
+    // printShape(f6_out, "f6_out");
+    // std::vector<std::vector<float>> a4_out = a4.forwardProp(f6_out);
+    // printShape(a4_out, "a4_out");
+    // std::vector<std::vector<float>> o1_out = o1.forwardProp(a4_out);
+    // printShape(o1_out, "o1_out");
+    // std::vector<int> labels = Output_Layer(o1_out,batch_images.size());
+    // std::cout<<"Label size: "<<labels.size();
+    // int correct = 0;
+    // for(int i = 0; i< labels.size();i++){
+    //     if (labels[i] == batch_labels[i]) {
+    //         correct++;
+    //     }
+    // }
+    // std::cout<<"Batch Processed, Number of correct: "<<correct<<std::endl;
 }
 
 std::vector<int> LeNet5::Output_Layer(std::vector<std::vector<float>> X,int outsize){
@@ -102,4 +138,14 @@ std::pair<std::vector<std::vector<float>>, std::vector<float>> LeNet5::initializ
     bias.resize(cols, 0.01f); // Small constant value for bias initialization
 
     return {weight, bias};
+}
+
+void LeNet5::printShape(const std::vector<std::vector<float>>& tensor, const std::string& name) {
+    if (tensor.empty()) {
+        std::cout << name << " shape: [0]" << std::endl;
+        return;
+    }
+    size_t rows = tensor.size();
+    size_t cols = tensor[0].size();
+    std::cout << name << " shape: [" << rows << " x " << cols << "]" << std::endl;
 }
