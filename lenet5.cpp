@@ -64,14 +64,21 @@ int LeNet5::Forward_Propagation(std::vector<std::vector<float>> batch_images, st
             correct++;
         }
     }
-    std::cout<<"Batch Processed, Number of correct: "<<correct<<std::endl;
+    float total_loss = 0.0f;
+    for (size_t i = 0; i < batch_labels.size(); ++i) {
+        int correct_label = batch_labels[i];
+        float prob = logits[i][correct_label]; // Softmax probability for the correct class
+        total_loss += -std::log(prob); // Cross-entropy loss
+    }
+    total_loss /= batch_labels.size(); // Average loss for the batch
+    std::cout<<"Average Loss For this batch:  "<<total_loss<<" Correct This Batch: "<<correct<<std::endl;
+
     return correct;
 }
 
 // Back Propagation
 void LeNet5::Back_Propagation(std::vector<int>batch_labels) {
     std::vector<std::vector<float>> dy_pred(batch_labels.size(), std::vector<float>(kernel_shape["OUTPUT"][0], 0));
-    //std::vector<std::vector<float>> dy_pred(batch_labels.size(), std::vector<float>(logits[0].size(), 0.0f));
     for (size_t i = 0; i < batch_labels.size(); ++i) {
         for (size_t j = 0; j < logits[i].size(); ++j) {
             dy_pred[i][j] = logits[i][j]; // Copy softmax probabilities
