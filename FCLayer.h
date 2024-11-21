@@ -30,7 +30,7 @@ public:
     std::vector<std::vector<float>> forward_prop(const std::vector<std::vector<float>>& input_array);
 
     // Backward Propagation: Compute gradients and update weights
-    std::vector<std::vector<float>> back_prop(const std::vector<std::vector<float>>& dZ, float momentum, float weight_decay);
+    std::vector<std::vector<float>> back_prop(const std::vector<std::vector<float>>& dZ);
 
     // Stochastic Diagonal Levenberg-Marquardt (SDLM): Compute Hessian approximation
     // std::vector<std::vector<float>> SDLM(const std::vector<std::vector<float>>& d2Z, float mu, float lr_global);

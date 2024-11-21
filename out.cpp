@@ -5,6 +5,7 @@
 #include <algorithm> // For std::transform
 #include"out.h"
 
+
 OutputLayer::OutputLayer(){}
 // Constructor to initialize weights and biases
 OutputLayer::OutputLayer(int inputSize, int outputSize)
@@ -20,6 +21,7 @@ OutputLayer::OutputLayer(int inputSize, int outputSize)
 
 // Forward pass through the output layer
 std::vector<std::vector<float>> OutputLayer::forwardProp(const std::vector<std::vector<float>>& input) {
+    this->input = input;
     size_t batchSize = input.size();      // Number of samples (60000)
     size_t numOutputs = weights[0].size();  // Number of output neurons (10)
     std::vector<std::vector<float>> z(batchSize, std::vector<float>(numOutputs, 0.0f));
@@ -39,53 +41,46 @@ std::vector<std::vector<float>> OutputLayer::forwardProp(const std::vector<std::
 }
 
 // Backward pass through the output layer
-// std::vector<std::vector<float>> OutputLayer::backProp(const std::vector<std::vector<float>>& dLoss) {
-// size_t batchSize = input.size();      // Number of samples (60000)
-// size_t numOutputs = weights.size();  // Number of output neurons (10)
-// size_t numInputs = input[0].size();  // Number of input neurons (84)
+std::vector<std::vector<float>> OutputLayer::backProp(const std::vector<std::vector<float>>& dLoss) {
 
-// // Gradients for weights and biases
-// std::vector<std::vector<float>> dWeights(numOutputs, std::vector<float>(numInputs, 0.0f));
-// std::vector<float> dBiases(numOutputs, 0.0f);
+    size_t batchSize = input.size();      // Number of samples (60000)
+    size_t numOutputs = weights[0].size();  // Number of output neurons (10)
+    size_t numInputs = input[0].size();  // Number of input neurons (84)
 
-// // Gradient for input to propagate to the previous layer
-// std::vector<std::vector<float>> dInput(batchSize, std::vector<float>(numInputs, 0.0f));
+    // Gradients for weights and biases
+    std::vector<std::vector<float>> dWeights(numInputs, std::vector<float>(numOutputs, 0.0f));
+    std::vector<float> dBiases(numOutputs, 0.0f);
 
-// // Compute gradients for weights, biases, and input for each sample
-// for (size_t sample = 0; sample < batchSize; ++sample) {
-//     for (size_t i = 0; i < numOutputs; ++i) {
-//         dBiases[i] += dLoss[sample][i]; // Accumulate bias gradient
-//         for (size_t j = 0; j < numInputs; ++j) {
-//             dWeights[i][j] += dLoss[sample][i] * input[sample][j]; // Accumulate weight gradient
-//             dInput[sample][j] += dLoss[sample][i] * weights[i][j]; // Propagate gradient to input
-//         }
-//     }
-// }
+    // Gradient for input to propagate to the previous layer
+    std::vector<std::vector<float>> dInput(batchSize, std::vector<float>(numInputs, 0.0f));
 
-// // Average gradients over the batch
-// for (size_t i = 0; i < numOutputs; ++i) {
-//     dBiases[i] /= batchSize;
-//     for (size_t j = 0; j < numInputs; ++j) {
-//         dWeights[i][j] /= batchSize;
-//     }
-// }
-
-// // Cache gradients for weight and bias updates
-// this->dWeights = dWeights;
-// this->dBiases = dBiases;
-
-// return dInput;
-// }
-
-    // Update weights and biases
-void OutputLayer::updateWeights(float learningRate) {
-    for (size_t i = 0; i < weights.size(); ++i) {
-        for (size_t j = 0; j < weights[i].size(); ++j) {
-            weights[i][j] -= learningRate * dWeights[i][j];
+    // Compute gradients for weights, biases, and input for each sample
+    for (size_t sample = 0; sample < batchSize; ++sample) {
+        for (size_t i = 0; i < numInputs; ++i) {
+            dBiases[i] += dLoss[sample][i]; // Accumulate bias gradient
+            for (size_t j = 0; j < numOutputs; ++j) {
+                dWeights[i][j] += dLoss[sample][i] * input[sample][j]; // Accumulate weight gradient
+                dInput[sample][j] += dLoss[sample][i] * weights[i][j]; // Propagate gradient to input
+            }
         }
-        biases[i] -= learningRate * dBiases[i];
     }
+
+    // Average gradients over the batch
+    for (size_t i = 0; i < numOutputs; ++i) {
+        dBiases[i] /= batchSize;
+        for (size_t j = 0; j < numInputs; ++j) {
+            dWeights[i][j] /= batchSize;
+        }
+    }
+
+    adam.update_weight(weights, dWeights);
+    adam.update_bias(biases, dBiases);
+
+    // Debugging: Print updated weights and biases
+    std::cout << "Updated weights and biases.\n";
+    return dInput;
 }
+
 
 // Initialize weights with small random values
 void OutputLayer::initializeWeights() {

@@ -35,7 +35,8 @@ private:
     std::map<std::string, int> hparameters_pooling = {{"stride", 2}, {"f", 2}};
 
     // Label for caching during forward propagation
-    // std::vector<int> batch_labels;
+    std::vector<int> labels;
+    std::vector<std::vector<float>> logits;
 
 public:
     // Constructor
@@ -45,7 +46,7 @@ public:
     void Forward_Propagation(std::vector<std::vector<float>> batch_images, std::vector<int>batch_labels);
 
     // Back propagation
-    void Back_Propagation(float momentum, float weight_decay);
+    void Back_Propagation(std::vector<int>batch_labels);
 
     // Stochastic Diagonal Levenberg-Marquardt (SDLM)
     void SDLM(float mu, float lr_global);

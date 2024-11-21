@@ -50,16 +50,3 @@ std::vector<std::vector<float>> Activation::backProp(const std::vector<std::vect
     }
     return dA;
 }
-
-// Stochastic Diagonal Levenberg-Marquardt
-std::vector<std::vector<float>> Activation::SDLM(const std::vector<std::vector<float>>& d2Z) {
-    std::vector<std::vector<float>> dA(d2Z.size(), std::vector<float>(d2Z[0].size()));
-
-    for (size_t i = 0; i < d2Z.size(); ++i) {
-        for (size_t j = 0; j < d2Z[i].size(); ++j) {
-            float derivative = d_act(inputImage[i][j]);
-            dA[i][j] = d2Z[i][j] * derivative * derivative;
-        }
-    }
-    return dA;
-}

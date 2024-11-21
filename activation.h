@@ -18,9 +18,6 @@ public:
     // Backward propagation
     std::vector<std::vector<float>> backProp(const std::vector<std::vector<float>>& dZ);
 
-    // Stochastic Diagonal Levenberg-Marquardt
-    std::vector<std::vector<float>> SDLM(const std::vector<std::vector<float>>& d2Z);
-
 private:
     // Cached input
     std::vector<std::vector<float>> inputImage;

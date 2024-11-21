@@ -5,18 +5,20 @@
 #include <cmath>
 #include <algorithm>
 #include <numeric>
+#include "adam.h"
 
 class OutputLayer {
 public:
     OutputLayer();
     // Constructor to initialize weights and biases
     OutputLayer(int inputSize, int outputSize);
+    AdamOptimizer adam(0.001, 0.9, 0.999, 1e-8);
 
     // Forward pass through the output layer
     std::vector<std::vector<float>> forwardProp(const std::vector<std::vector<float>>& input);
 
     // Backward pass through the output layer
-    std::vector<float> backProp(const std::vector<float>& dLoss);
+    std::vector<std::vector<float>> backProp(const std::vector<std::vector<float>>& dLoss);
 
     // Update weights and biases
     void updateWeights(float learningRate);

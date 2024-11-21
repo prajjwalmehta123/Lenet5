@@ -38,7 +38,7 @@ std::vector<std::vector<float>> FCLayer::forward_prop(const std::vector<std::vec
 }
 
 // Backward Propagation
-std::vector<std::vector<float>> FCLayer::back_prop(const std::vector<std::vector<float>>& dZ, float momentum, float weight_decay) {
+std::vector<std::vector<float>> FCLayer::back_prop(const std::vector<std::vector<float>>& dZ) {
     int batch_size = dZ.size();
     int input_size = weight.size();
     int output_size = weight[0].size();
@@ -71,8 +71,8 @@ std::vector<std::vector<float>> FCLayer::back_prop(const std::vector<std::vector
         }
     }
     // Update weights and biases using Adam
-    adam.update(weight, dW);
-    adam.update(bias, db);
+    adam.update_weight(weight, dW);
+    adam.update_bias(bias, db);
 
     return dA;
 }

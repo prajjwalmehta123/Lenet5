@@ -33,6 +33,7 @@ int main()
         for(int i = 0; i<dataloader.num_batches;i++) {
                 auto x =dataloader.get_batch();
                 lenet.Forward_Propagation(x.first, x.second);
+                lenet.Back_Propagation(x.second);
                 break;
         }
 
