@@ -18,7 +18,7 @@ public:
     // Backward propagation
     std::vector<std::vector<float>> backProp(const std::vector<std::vector<float>>& dZ);
 
-private:
+// private:
     // Cached input
     std::vector<std::vector<float>> inputImage;
 

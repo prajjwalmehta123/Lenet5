@@ -28,7 +28,7 @@ public:
     // Softmax activation function
     std::vector<float> softmax(const std::vector<float>& z);
 
-private:
+// private:
     std::vector<std::vector<float>> weights; // Weight matrix [outputSize x inputSize]
     std::vector<float> biases;              // Bias vector [outputSize]
     std::vector<std::vector<float>> input;               // Cached input

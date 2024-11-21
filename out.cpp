@@ -4,6 +4,7 @@
 #include <numeric> // For std::accumulate
 #include <algorithm> // For std::transform
 #include"out.h"
+#include <random>
 
 
 OutputLayer::OutputLayer(){}
@@ -86,14 +87,28 @@ std::vector<std::vector<float>> OutputLayer::backProp(const std::vector<std::vec
 
 
 // Initialize weights with small random values
+
 void OutputLayer::initializeWeights() {
+    int n_in = weights.size();          // Number of input units
+    int n_out = weights[0].size();      // Number of output units
+
+    // Calculate the Xavier initialization range
+    float limit = sqrt(6.0f / (n_in + n_out));
+
+    // Set up a random number generator
+    std::random_device rd;
+    std::mt19937 gen(rd());
+    std::uniform_real_distribution<float> dist(-limit, limit);
+
+    // Initialize weights with Xavier initialization
     for (auto& row : weights) {
         for (auto& val : row) {
-            val = static_cast<float>(rand()) / RAND_MAX * 0.01f; // Small random values
+            val = dist(gen);
         }
     }
-    // std::cout<<"weights done"<<weights.size()<<" "<<weights[0].size()<<std::endl;
-    // std::cout<<"biases done"<<biases.size()<<std::endl;
+
+    // Initialize biases to zero
+    std::fill(biases.begin(), biases.end(), 0.0f);
 }
 
 // Softmax activation function

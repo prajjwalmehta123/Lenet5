@@ -20,6 +20,9 @@ private:
     // Helper function to initialize weights and biases
     std::pair<std::vector<std::vector<float>>, std::vector<float>> initialize(
         int rows, int cols);
+    std::vector<std::vector<float>> dW; // Gradient w.r.t weights
+    std::vector<float> db;
+    std::vector<std::vector<float>> dA_prev;
 
 public:
     FCLayer();

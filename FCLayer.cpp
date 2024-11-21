@@ -42,55 +42,53 @@ std::vector<std::vector<float>> FCLayer::forward_prop(const std::vector<std::vec
 // Backward Propagation
 std::vector<std::vector<float>> FCLayer::back_prop(const std::vector<std::vector<float>>& dZ) {
     int batch_size = dZ.size();
-    int input_size = weight.size();
-    int output_size = weight[0].size();
+    int output_size = weight.size();       // Number of output neurons
+    int input_size = weight[0].size();     // Number of input features
 
-    // Compute dA = dZ * weight^T
-    std::vector<std::vector<float>> dA(batch_size, std::vector<float>(input_size, 0.0f));
+    // Initialize gradients
+    dA_prev = std::vector<std::vector<float>>(batch_size, std::vector<float>(input_size, 0.0f));
+    dW = std::vector<std::vector<float>>(output_size, std::vector<float>(input_size, 0.0f));
+    db = std::vector<float>(output_size, 0.0f);
+
+    // Compute gradients
     for (int i = 0; i < batch_size; ++i) {
-        for (int j = 0; j < input_size; ++j) {
-            for (int k = 0; k < output_size; ++k) {
-                dA[i][j] += dZ[i][k] * weight[j][k];
+        for (int j = 0; j < output_size; ++j) {
+            db[j] += dZ[i][j];  // Gradient w.r.t biases
+
+            for (int k = 0; k < input_size; ++k) {
+                dW[j][k] += dZ[i][j] * input_array[i][k];        // Gradient w.r.t weights
+                dA_prev[i][k] += dZ[i][j] * weight[j][k];        // Gradient w.r.t inputs
             }
         }
     }
 
-    // Compute dW = input_array^T * dZ
-    std::vector<std::vector<float>> dW(input_size, std::vector<float>(output_size, 0.0f));
-    for (int i = 0; i < input_size; ++i) {
-        for (int j = 0; j < output_size; ++j) {
-            for (int k = 0; k < batch_size; ++k) {
-                dW[i][j] += input_array[k][i] * dZ[k][j];
-            }
+    // Average gradients over the batch
+    for (int j = 0; j < output_size; ++j) {
+        db[j] /= static_cast<float>(batch_size);
+        for (int k = 0; k < input_size; ++k) {
+            dW[j][k] /= static_cast<float>(batch_size);
         }
     }
 
-    // Compute db = sum of dZ across batches
-    std::vector<float> db(output_size, 0.0f);
-    for (int i = 0; i < batch_size; ++i) {
-        for (int j = 0; j < output_size; ++j) {
-            db[j] += dZ[i][j];
-        }
-    }
-    // Update weights and biases using Adam
+    // Update weights and biases using Adam optimizer
     adam.update_weight(weight, dW);
     adam.update_bias(bias, db);
 
-    return dA;
+    // Return gradient w.r.t inputs to propagate to previous layer
+    return dA_prev;
 }
 
 // Initialize weights and biases
-std::pair<std::vector<std::vector<float>>, std::vector<float>> FCLayer::initialize(int n_in, int n_out) {
-    std::vector<std::vector<float>> w(n_in, std::vector<float>(n_out, 0.0f));
-    std::vector<float> b(n_out, 0.0f); // Initialize biases to zero
+std::pair<std::vector<std::vector<float>>, std::vector<float>> FCLayer::initialize(int rows, int cols) {
+    std::vector<std::vector<float>> w(rows, std::vector<float>(cols, 0.0f));
+    std::vector<float> b(cols, 0.01f);
 
     std::random_device rd;
     std::mt19937 gen(rd());
-    float stddev = sqrt(2.0f / n_in);
-    std::normal_distribution<float> d(0.0f, stddev);
+    std::normal_distribution<float> d(0.0f, 0.1f);
 
-    for (int i = 0; i < n_in; ++i) {
-        for (int j = 0; j < n_out; ++j) {
+    for (int i = 0; i < rows; ++i) {
+        for (int j = 0; j < cols; ++j) {
             w[i][j] = d(gen);
         }
     }
