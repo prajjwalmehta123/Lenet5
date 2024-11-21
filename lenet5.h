@@ -48,9 +48,6 @@ public:
     // Back propagation
     void Back_Propagation(std::vector<int>batch_labels);
 
-    // Stochastic Diagonal Levenberg-Marquardt (SDLM)
-    void SDLM(float mu, float lr_global);
-
     // Initialize weights
     std::pair<std::vector<std::vector<float>>, std::vector<float>> initialize_weights(std::vector<int> kernel_shape);
     std::vector<int> Output_Layer(std::vector<std::vector<float>> X, int outsize);

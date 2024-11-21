@@ -13,9 +13,7 @@ LeNet5::LeNet5(){
     }
     c1_layer = ConvolutionLayer(kernel_shape["C1"][2], kernel_shape["C1"][3], kernel_shape["C1"][0], hparameters_convlayer["stride"], hparameters_convlayer["padding"]);
     a1 = Activation();
-    //ConvolutionLayer convLayer(kernel_shape["C1"][2], kernel_shape["C1"][3], kernel_shape["C1"][0], hparameters_convlayer["stride"], hparameters_convlayer["padding"]);
     s2_layer = subsampling(hparameters_pooling["f"],hparameters_pooling["stride"],kernel_shape["C1"][3]);
-    //subsampling s2_layer(hparameters_pooling["f"],hparameters_pooling["stride"]);
     c3_layer = ConvolutionLayer(kernel_shape["C3"][2], kernel_shape["C3"][3], kernel_shape["C3"][0], hparameters_convlayer["stride"], hparameters_convlayer["padding"]);
     a2 = Activation();
     s4_layer = subsampling(hparameters_pooling["f"],hparameters_pooling["stride"],kernel_shape["C3"][3]);
@@ -63,10 +61,9 @@ void LeNet5::Forward_Propagation(std::vector<std::vector<float>> batch_images, s
 
 // Back Propagation
 void LeNet5::Back_Propagation(std::vector<int>batch_labels) {
-    std::vector<std::vector<float>> dy_pred(batch_labels.size(), std::vector<float>(kernel_shape["OUTPUT"][1], 0)); // Properly initialize dy_pred
-
+    std::vector<std::vector<float>> dy_pred(batch_labels.size(), std::vector<float>(kernel_shape["OUTPUT"][0], 0));
     for (int i = 0; i < batch_labels.size(); i++) {
-        for (int j = 0; j < kernel_shape["OUTPUT"][1]; j++) {
+        for (int j = 0; j < kernel_shape["OUTPUT"][0]; j++) {
             if (j == batch_labels[i]) {
                 dy_pred[i][j] = 1 - logits[i][j];
             } else {
@@ -74,7 +71,6 @@ void LeNet5::Back_Propagation(std::vector<int>batch_labels) {
             }
         }
     }
-
     std::vector<std::vector<float>> o1_back = o1.backProp(dy_pred);
     printShape(o1_back, "o1_back");
     std::vector<std::vector<float>> a4_back = a4.backProp(o1_back);
@@ -100,7 +96,6 @@ std::vector<int> LeNet5::Output_Layer(std::vector<std::vector<float>> X,int outs
                 max_val = elem;
             }
         }
-        // Assign the index of the maximum value to the output
         Y[i] = max_idx;
     }
     return Y;
