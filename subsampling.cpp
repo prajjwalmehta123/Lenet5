@@ -103,7 +103,6 @@ std::vector<std::vector<float>> subsampling::backward(const std::vector<std::vec
             }
         }
     }
-
     return gradInputBatch;
 }
 

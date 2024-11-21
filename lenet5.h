@@ -16,7 +16,7 @@ private:
     FCLayer f5_layer,f6_layer; // Fully connected layer
     ConvolutionLayer c1_layer,c3_layer;
     subsampling s2_layer,s4_layer;
-    Activation a1, a2, a3, a4;
+    Activation a1, a2, a3, a4, a5,a6;
     OutputLayer o1;
 
     // Kernel shapes for various layers
@@ -43,7 +43,7 @@ public:
     LeNet5();
 
     // Forward propagation
-    void Forward_Propagation(std::vector<std::vector<float>> batch_images, std::vector<int>batch_labels);
+    int Forward_Propagation(std::vector<std::vector<float>> batch_images, std::vector<int>batch_labels);
 
     // Back propagation
     void Back_Propagation(std::vector<int>batch_labels);

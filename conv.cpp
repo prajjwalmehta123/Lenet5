@@ -165,6 +165,7 @@ std::vector<std::vector<float>> ConvolutionLayer::backward(const std::vector<std
             }
         }
     }
+    updateWeights();
     return gradInputBatch;
 }
 
