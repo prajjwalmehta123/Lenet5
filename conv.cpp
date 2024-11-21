@@ -6,6 +6,8 @@ ConvolutionLayer::ConvolutionLayer(){}
 
 ConvolutionLayer::ConvolutionLayer(int inputChannels, int outputChannels, int kernelSize, int stride, int padding)
     : inputChannels(inputChannels), outputChannels(outputChannels), kernelSize(kernelSize), stride(stride), padding(padding) {
+    weightOptimizers.resize(outputChannels, std::vector<AdamOptimizer>(inputChannels, AdamOptimizer(0.001,0.9,0.999,1e-8)));
+    biasOptimizer = AdamOptimizer(0.001,0.9,0.999,1e-8);
     initializeWeights();
 }
 
@@ -97,16 +99,86 @@ int ConvolutionLayer::calculateOutputSize(int inputSize, int kernelSize, int str
     return ((inputSize - kernelSize + 2 * padding) / stride) + 1;
 }
 std::vector<std::vector<float>> ConvolutionLayer::backward(const std::vector<std::vector<float>>& gradOutputBatch) {
-    // To be implemented
-    std::cout << "Backward pass not yet implemented." << std::endl;
-    return {};
+    // gradOutputBatch: [batchSize][outputSizePerImage], where outputSizePerImage = outputChannels * outputHeight * outputWidth
+
+    size_t batchSize = gradOutputBatch.size();
+
+    int inputSizePerImage = inputDataBatch[0].size(); // Total elements per image
+    int inputHeight = static_cast<int>(std::sqrt(inputSizePerImage / inputChannels));
+    int inputWidth = inputHeight;
+
+    int outputHeight = calculateOutputSize(inputHeight, kernelSize, stride, padding);
+    int outputWidth = outputHeight;
+
+
+    // Initialize gradients
+    gradWeights = std::vector<std::vector<std::vector<std::vector<float>>>>(outputChannels,
+        std::vector<std::vector<std::vector<float>>>(inputChannels,
+            std::vector<std::vector<float>>(kernelSize, std::vector<float>(kernelSize, 0.0f))));
+    gradBiases = std::vector<float>(outputChannels, 0.0f);
+
+    // Initialize gradInputBatch to zeros
+    std::vector<std::vector<float>> gradInputBatch(batchSize, std::vector<float>(inputDataBatch[0].size(), 0.0f));
+
+    // Process each sample in the batch
+    #pragma omp parallel for
+    for (size_t b = 0; b < batchSize; ++b) {
+        const std::vector<float>& inputFlat = inputDataBatch[b];        // [inputChannels * inputHeight * inputWidth]
+        const std::vector<float>& gradOutputFlat = gradOutputBatch[b];  // [outputChannels * outputHeight * outputWidth]
+        std::vector<float>& gradInputFlat = gradInputBatch[b];          // [inputChannels * inputHeight * inputWidth]
+
+        // Loop over output channels
+        for (int oc = 0; oc < outputChannels; ++oc) {
+            // Loop over output spatial dimensions
+            for (int h_out = 0; h_out < outputHeight; ++h_out) {
+                for (int w_out = 0; w_out < outputWidth; ++w_out) {
+                    int out_idx = oc * outputHeight * outputWidth + h_out * outputWidth + w_out;
+                    float gradOutputValue = gradOutputFlat[out_idx];
+
+                    // Update bias gradient
+                    gradBiases[oc] += gradOutputValue / batchSize;  // Average over batch size
+
+                    // Loop over input channels
+                    for (int ic = 0; ic < inputChannels; ++ic) {
+                        // Loop over kernel dimensions
+                        for (int kh = 0; kh < kernelSize; ++kh) {
+                            for (int kw = 0; kw < kernelSize; ++kw) {
+                                int h_in = h_out * stride - padding + kh;
+                                int w_in = w_out * stride - padding + kw;
+
+                                // Check if indices are within bounds
+                                if (h_in >= 0 && h_in < inputHeight && w_in >= 0 && w_in < inputWidth) {
+                                    int in_idx = ic * inputHeight * inputWidth + h_in * inputWidth + w_in;
+                                    float inputValue = inputFlat[in_idx];
+                                    float weightValue = weights[oc][ic][kh][kw];
+
+                                    // Update gradWeights
+                                    gradWeights[oc][ic][kh][kw] += (gradOutputValue * inputValue) / batchSize;
+
+                                    // Update gradInputFlat
+                                    gradInputFlat[in_idx] += gradOutputValue * weightValue;
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+    return gradInputBatch;
 }
 
 
-void ConvolutionLayer::updateWeights(float learningRate) {
-    // To be implemented
-    std::cout << "Weight update not yet implemented." << std::endl;
+void ConvolutionLayer::updateWeights() {
+    // Update weights using AdamOptimizers
+    for (int oc = 0; oc < outputChannels; ++oc) {
+        for (int ic = 0; ic < inputChannels; ++ic) {
+            weightOptimizers[oc][ic].update_weight(weights[oc][ic], gradWeights[oc][ic]);
+        }
+    }
+    biasOptimizer.update_bias(biases, gradBiases);
 }
+
 
 void ConvolutionLayer::setGPUComputations(std::shared_ptr<GPUComputations> gpuComputations) {
     this->gpuComputations = gpuComputations;

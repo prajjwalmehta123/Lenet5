@@ -6,9 +6,9 @@
 
 class AdamOptimizer {
 public:
-    AdamOptimizer();
+    //AdamOptimizer();
     // Constructor to initialize Adam optimizer parameters
-    // AdamOptimizer(float learning_rate = 0.001, float beta1 = 0.9, float beta2 = 0.999, float epsilon = 1e-8);
+    AdamOptimizer(float learning_rate = 0.001, float beta1 = 0.9, float beta2 = 0.999, float epsilon = 1e-8);
 
     // Update function for weights
     void update_weight(

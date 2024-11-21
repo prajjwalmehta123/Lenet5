@@ -17,6 +17,7 @@ OutputLayer::OutputLayer(int inputSize, int outputSize)
     std::vector<float> output;              // Cached output
     std::vector<std::vector<float>> dWeights; // Gradients for weights
     std::vector<float> dBiases;              // Gradients for biases
+    adam = AdamOptimizer(0.001,0.9,0.999,1e-8);
 }
 
 // Forward pass through the output layer

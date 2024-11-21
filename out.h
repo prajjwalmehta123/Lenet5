@@ -12,7 +12,7 @@ public:
     OutputLayer();
     // Constructor to initialize weights and biases
     OutputLayer(int inputSize, int outputSize);
-    AdamOptimizer adam(0.001, 0.9, 0.999, 1e-8);
+    AdamOptimizer adam;
 
     // Forward pass through the output layer
     std::vector<std::vector<float>> forwardProp(const std::vector<std::vector<float>>& input);
