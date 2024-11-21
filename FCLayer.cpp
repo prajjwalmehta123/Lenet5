@@ -15,6 +15,7 @@ FCLayer::FCLayer(const std::pair<int, int>& weight_shape, const std::string& ini
     int cols = weight_shape.second;
     // Initialize weights and biases
     std::tie(weight, bias) = initialize(rows, cols);
+    // std::cout<<"row"<<rows<<"cols"<<cols<<std::endl;
 }
 
 // Forward Propagation

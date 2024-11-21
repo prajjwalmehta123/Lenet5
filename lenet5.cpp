@@ -77,14 +77,14 @@ void LeNet5::Back_Propagation(std::vector<int>batch_labels) {
 
     std::vector<std::vector<float>> o1_back = o1.backProp(dy_pred);
     printShape(o1_back, "o1_back");
-    // std::vector<std::vector<float>> a4_back = a4.backProp(o1_back);
-    // printShape(a4_back, "a4_back");
-    // std::vector<std::vector<float>> f6_back = f6_layer.back_prop(a4_back);
-    // printShape(f6_back, "f6_back");
-    // std::vector<std::vector<float>> a3_back = a3.backProp(f6_back);
-    // printShape(a3_back, "a3_back");
-    // std::vector<std::vector<float>> f5_back = f5_layer.back_prop(a3_back);
-    // printShape(f5_back, "f5_back");
+    std::vector<std::vector<float>> a4_back = a4.backProp(o1_back);
+    printShape(a4_back, "a4_back");
+    std::vector<std::vector<float>> f6_back = f6_layer.back_prop(a4_back);
+    printShape(f6_back, "f6_back");
+    std::vector<std::vector<float>> a3_back = a3.backProp(f6_back);
+    printShape(a3_back, "a3_back");
+    std::vector<std::vector<float>> f5_back = f5_layer.back_prop(a3_back);
+    printShape(f5_back, "f5_back");
 }
 
 std::vector<int> LeNet5::Output_Layer(std::vector<std::vector<float>> X,int outsize){

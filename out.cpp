@@ -8,12 +8,12 @@
 
 OutputLayer::OutputLayer(){}
 // Constructor to initialize weights and biases
-OutputLayer::OutputLayer(int inputSize, int outputSize)
-    : weights(outputSize, std::vector<float>(inputSize)), biases(outputSize, 0.0f) {
+OutputLayer::OutputLayer(int outputSize, int inputSize)
+    : weights(outputSize, std::vector<float>(inputSize, 0.0f)), biases(outputSize, 0.0f) {
     initializeWeights();
     std::vector<std::vector<float>> weights; // Weight matrix [outputSize x inputSize]
     std::vector<float> biases;              // Bias vector [outputSize]
-    std::vector<std::vector<float>> input;               // Cached input
+    std::vector<std::vector<float>> input;  // Cached input
     std::vector<float> output;              // Cached output
     std::vector<std::vector<float>> dWeights; // Gradients for weights
     std::vector<float> dBiases;              // Gradients for biases
@@ -22,16 +22,19 @@ OutputLayer::OutputLayer(int inputSize, int outputSize)
 
 // Forward pass through the output layer
 std::vector<std::vector<float>> OutputLayer::forwardProp(const std::vector<std::vector<float>>& input) {
-    this->input = input;
-    size_t batchSize = input.size();      // Number of samples (60000)
-    size_t numOutputs = weights[0].size();  // Number of output neurons (10)
+    this->input = input; // Cache the input for backpropagation
+
+    size_t batchSize = input.size();      // Number of samples in the batch
+    size_t numOutputs = weights.size();   // Number of output neurons (e.g., 10 classes)
+    size_t numInputs = weights[0].size(); // Number of input neurons (e.g., 84 from previous layer)
+
     std::vector<std::vector<float>> z(batchSize, std::vector<float>(numOutputs, 0.0f));
     std::vector<std::vector<float>> output(batchSize, std::vector<float>(numOutputs, 0.0f));
 
-    // Compute z = W * input + b for each sample
+    // Compute z = W * input^T + b for each sample
     for (size_t sample = 0; sample < batchSize; ++sample) {
         for (size_t i = 0; i < numOutputs; ++i) {
-            for (size_t j = 0; j < weights.size(); ++j) {
+            for (size_t j = 0; j < numInputs; ++j) {
                 z[sample][i] += weights[i][j] * input[sample][j];
             }
             z[sample][i] += biases[i]; // Add bias
@@ -44,12 +47,11 @@ std::vector<std::vector<float>> OutputLayer::forwardProp(const std::vector<std::
 // Backward pass through the output layer
 std::vector<std::vector<float>> OutputLayer::backProp(const std::vector<std::vector<float>>& dLoss) {
 
-    size_t batchSize = input.size();      // Number of samples (60000)
-    size_t numOutputs = weights[0].size();  // Number of output neurons (10)
-    size_t numInputs = input[0].size();  // Number of input neurons (84)
-
-    // Gradients for weights and biases
-    std::vector<std::vector<float>> dWeights(numInputs, std::vector<float>(numOutputs, 0.0f));
+    size_t batchSize = input.size();      // Number of samples
+    size_t numOutputs = weights.size();   // Number of output neurons (10)
+    size_t numInputs = weights[0].size(); // Number of input neurons (84)
+    // Initialize gradients
+    std::vector<std::vector<float>> dWeights(numOutputs, std::vector<float>(numInputs, 0.0f));
     std::vector<float> dBiases(numOutputs, 0.0f);
 
     // Gradient for input to propagate to the previous layer
@@ -57,9 +59,9 @@ std::vector<std::vector<float>> OutputLayer::backProp(const std::vector<std::vec
 
     // Compute gradients for weights, biases, and input for each sample
     for (size_t sample = 0; sample < batchSize; ++sample) {
-        for (size_t i = 0; i < numInputs; ++i) {
+        for (size_t i = 0; i < numOutputs; ++i) {
             dBiases[i] += dLoss[sample][i]; // Accumulate bias gradient
-            for (size_t j = 0; j < numOutputs; ++j) {
+            for (size_t j = 0; j < numInputs; ++j) {
                 dWeights[i][j] += dLoss[sample][i] * input[sample][j]; // Accumulate weight gradient
                 dInput[sample][j] += dLoss[sample][i] * weights[i][j]; // Propagate gradient to input
             }
@@ -68,17 +70,17 @@ std::vector<std::vector<float>> OutputLayer::backProp(const std::vector<std::vec
 
     // Average gradients over the batch
     for (size_t i = 0; i < numOutputs; ++i) {
-        dBiases[i] /= batchSize;
+        dBiases[i] /= static_cast<float>(batchSize);
         for (size_t j = 0; j < numInputs; ++j) {
-            dWeights[i][j] /= batchSize;
+            dWeights[i][j] /= static_cast<float>(batchSize);
         }
     }
 
+    // Update weights and biases using Adam optimizer
     adam.update_weight(weights, dWeights);
     adam.update_bias(biases, dBiases);
 
-    // Debugging: Print updated weights and biases
-    std::cout << "Updated weights and biases.\n";
+    // Return gradient w.r.t. inputs to propagate to previous layer
     return dInput;
 }
 
@@ -90,6 +92,8 @@ void OutputLayer::initializeWeights() {
             val = static_cast<float>(rand()) / RAND_MAX * 0.01f; // Small random values
         }
     }
+    // std::cout<<"weights done"<<weights.size()<<" "<<weights[0].size()<<std::endl;
+    // std::cout<<"biases done"<<biases.size()<<std::endl;
 }
 
 // Softmax activation function
