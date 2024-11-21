@@ -4,8 +4,11 @@ using namespace std;
 subsampling::subsampling() {
 }
 
-subsampling::subsampling(int kernel_size, int stride,int image_size, int num_feature_maps) : kernel_size(kernel_size), stride(stride),image_size(image_size), num_feature_maps(num_feature_maps) {
-}
+subsampling::subsampling(int kernel_size, int stride, int image_size, int num_feature_maps)
+    : kernel_size(kernel_size), stride(stride), image_size(image_size), num_feature_maps(num_feature_maps),
+      inputHeight(image_size), inputWidth(image_size),
+      pooledHeight((image_size - kernel_size) / stride + 1),
+      pooledWidth((image_size - kernel_size) / stride + 1) {}
 
 std::vector<std::vector<float>> subsampling::average_pooling(const vector<vector<float>>& inputBatch) {
     inputDataBatch = inputBatch;

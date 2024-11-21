@@ -1,3 +1,5 @@
+// conv.h
+
 #ifndef CONV_H
 #define CONV_H
 
@@ -11,18 +13,26 @@ class GPUComputations; // Forward declaration
 
 class ConvolutionLayer {
 public:
+    // Constructors
     ConvolutionLayer();
-
-    int outputChannels;
     ConvolutionLayer(int inputChannels, int outputChannels, int kernelSize, int stride = 1, int padding = 0);
+
+    // Forward and Backward Passes
     std::vector<std::vector<float>> forward(const std::vector<std::vector<float>>& inputBatch, int imageHeight, int imageWidth);
     std::vector<std::vector<float>> backward(const std::vector<std::vector<float>>& gradOutputBatch);
+
+    // Update Weights
     void updateWeights();
+
+    // Set GPU Computations Handler
     void setGPUComputations(std::shared_ptr<GPUComputations> gpuComputations);
+
+    // Utility
     static int calculateOutputSize(int inputSize, int kernelSize, int stride, int padding);
 
 private:
     int inputChannels;
+    int outputChannels;
     int kernelSize;
     int stride;
     int padding;
@@ -39,7 +49,6 @@ private:
     std::shared_ptr<GPUComputations> gpuComputations;
     void initializeWeights();
     std::vector<std::vector<float>> conv2DCPU(const std::vector<std::vector<float>>& inputBatch, int imageHeight, int imageWidth);
-
 };
 
 #endif // CONV_H

@@ -1,128 +1,124 @@
+// test_adam_optimizer.cpp
+
+#include "adam.h"
 #include <iostream>
 #include <vector>
-#include <iomanip> // For setting precision
+#include <cmath>
 #include <cassert>
-#include "FCLayer.h"
-
-// Function to print a 2D vector
-void print2DVector(const std::vector<std::vector<float>>& vec) {
-    for (const auto& row : vec) {
-        for (float val : row) {
-            std::cout << std::fixed << std::setprecision(4) << val << "\t";
-        }
-        std::cout << "\n";
-    }
-}
 
 int main() {
-    // Define the test input batch
-    std::vector<std::vector<float>> inputBatch = {
-        {1.0f, 2.0f, 3.0f}, // Sample 1
-        {4.0f, 5.0f, 6.0f}  // Sample 2
+    // Define Adam optimizer parameters
+    float learning_rate = 0.1f;
+    float beta1 = 0.9f;
+    float beta2 = 0.999f;
+    float epsilon = 1e-8f;
+
+    // Instantiate the Adam optimizer
+    AdamOptimizer optimizer(learning_rate, beta1, beta2, epsilon);
+
+    // Define sample weights and biases
+    std::vector<std::vector<float>> weights = {
+        {1.0f, 2.0f},
+        {3.0f, 4.0f}
     };
 
-    // Define layer dimensions
-    int inputSize = 3;
-    int outputSize = 2;
+    std::vector<float> biases = {0.5f, -0.5f};
 
-    // Create an instance of FCLayer
-    FCLayer fcLayer({outputSize, inputSize}, "manual");
-
-    // Manually set weights and biases
-    fcLayer.weight = {
-        {0.1f, 0.2f, 0.3f}, // Weights for neuron 0
-        {0.4f, 0.5f, 0.6f}  // Weights for neuron 1
-    };
-    fcLayer.bias = {0.5f, 0.6f}; // Biases for neurons
-
-    // Perform forward propagation
-    std::vector<std::vector<float>> outputBatch = fcLayer.forward_prop(inputBatch);
-
-    // Print the outputs
-    std::cout << "Forward Propagation Output:\n";
-    print2DVector(outputBatch);
-
-    // Define the gradient from the next layer (dZ)
-    std::vector<std::vector<float>> dZ = {
-        {1.0f, 1.5f}, // Gradient for Sample 1
-        {2.0f, 2.5f}  // Gradient for Sample 2
+    // Define sample gradients for weights and biases
+    std::vector<std::vector<float>> weight_gradients = {
+        {0.1f, 0.2f},
+        {0.3f, 0.4f}
     };
 
-    // Perform backward propagation
-    std::vector<std::vector<float>> dA_prev = fcLayer.back_prop(dZ);
+    std::vector<float> bias_gradients = {0.05f, -0.05f};
 
-    // Print the gradients w.r.t. inputs
-    std::cout << "\nBackward Propagation Output (Gradients w.r.t Input):\n";
-    print2DVector(dA_prev);
+    // Perform first update (t=1)
+    optimizer.update_weight(weights, weight_gradients);
+    optimizer.update_bias(biases, bias_gradients);
 
-    // Expected gradients w.r.t inputs
-    std::vector<std::vector<float>> expected_dA_prev = {
-        {0.7f, 0.95f, 1.2f},
-        {1.2f, 1.65f, 2.1f}
+    // Expected updates based on Adam algorithm for t=1
+    // Since t=1, bias-corrected moments are m_hat = m / (1 - beta1^1) = m / 0.1
+    // Similarly, v_hat = v / (1 - beta2^1) = v / 0.001
+    // Given initial m and v are zero, after first update:
+    // m = beta1 * 0 + (1 - beta1) * g = 0.1 * g
+    // v = beta2 * 0 + (1 - beta2) * g^2 = 0.001 * g^2
+    // m_hat = (0.1 * g) / 0.1 = g
+    // v_hat = (0.001 * g^2) / 0.001 = g^2
+    // Thus, weight update: w -= lr * g / (sqrt(g^2) + epsilon) ≈ w -= lr * sign(g)
+    // Since g > 0, sign(g) = 1, so w -= lr * 1 = w - 0.1
+    // Similarly for biases: b -= lr * sign(g) = b - 0.1 (for positive g) or b + 0.1 (for negative g)
+
+    // Define expected updated weights and biases
+    std::vector<std::vector<float>> expected_weights = {
+        {0.9f, 1.9f}, // 1.0 - 0.1, 2.0 - 0.1
+        {2.9f, 3.9f}  // 3.0 - 0.1, 4.0 - 0.1
     };
 
-    // Verify dA_prev
-    for (size_t i = 0; i < dA_prev.size(); ++i) {
-        for (size_t j = 0; j < dA_prev[0].size(); ++j) {
-            assert(fabs(dA_prev[i][j] - expected_dA_prev[i][j]) < 1e-4);
+    std::vector<float> expected_biases = {0.4f, -0.4f}; // 0.5 - 0.1, -0.5 + 0.1
+
+    // Verify updated weights
+    bool weights_correct = true;
+    for (size_t i = 0; i < weights.size(); ++i) {
+        for (size_t j = 0; j < weights[0].size(); ++j) {
+            if (std::abs(weights[i][j] - expected_weights[i][j]) > 1e-5) {
+                weights_correct = false;
+                break;
+            }
+        }
+        if (!weights_correct) break;
+    }
+
+    // Verify updated biases
+    bool biases_correct = true;
+    for (size_t i = 0; i < biases.size(); ++i) {
+        if (std::abs(biases[i] - expected_biases[i]) > 1e-5) {
+            biases_correct = false;
+            break;
         }
     }
 
-    // Expected gradients w.r.t weights
-    std::vector<std::vector<float>> expected_dW = {
-        {4.5f, 6.0f, 7.5f},   // For neuron 0
-        {5.75f, 7.75f, 9.75f} // For neuron 1
-    };
-
-    // Expected gradients w.r.t biases
-    std::vector<float> expected_db = {1.5f, 2.0f};
-
-    // Since weights and biases are private, you need to modify your class to store gradients for testing
-    // Assuming you have public members or methods to access dW and db
-    // For the purpose of this test, let's assume we have access to dW and db
-
-    // Print expected gradients
-    std::cout << "\nExpected Gradients w.r.t Weights (dW):\n";
-    print2DVector(expected_dW);
-
-    std::cout << "\nExpected Gradients w.r.t Biases (db):\n";
-    for (float val : expected_db) {
-        std::cout << std::fixed << std::setprecision(4) << val << "\t";
-    }
-    std::cout << "\n";
-
-    // Verify the gradients computed during backpropagation
-    // Assuming your FCLayer class stores the computed gradients in member variables
-    // Let's access them (you may need to adjust your class to expose them for testing)
-
-    // For demonstration, let's assume fcLayer.dW and fcLayer.db exist and are accessible
-    // Replace these with actual code to access gradients in your implementation
-
-    
-    // Print computed gradients
-     std::cout << "\nComputed Gradients w.r.t Weights (dW):\n";
-        print2DVector(fcLayer.dW);
-
-        std::cout << "\nComputed Gradients w.r.t Biases (db):\n";
-        for (float val : fcLayer.db) {
-        std::cout << std::fixed << std::setprecision(4) << val << "\t";
+    // Output the test results
+    if (weights_correct) {
+        std::cout << "Weight updates are correct." << std::endl;
+    } else {
+        std::cout << "Weight updates are incorrect." << std::endl;
+        std::cout << "Expected Weights:" << std::endl;
+        for (const auto& row : expected_weights) {
+            for (const auto& val : row) {
+                std::cout << val << " ";
+            }
+            std::cout << std::endl;
         }
-        std::cout << "\n";
-
-    // Verify dW and db
-    // Verify dW and db
-for (size_t i = 0; i < fcLayer.dW.size(); ++i) {
-    for (size_t j = 0; j < fcLayer.dW[0].size(); ++j) {
-        assert(fabs(fcLayer.dW[i][j] - expected_dW[i][j]) < 1e-4);
+        std::cout << "Actual Weights:" << std::endl;
+        for (const auto& row : weights) {
+            for (const auto& val : row) {
+                std::cout << val << " ";
+            }
+            std::cout << std::endl;
+        }
     }
-}
 
-for (size_t i = 0; i < fcLayer.db.size(); ++i) {
-    assert(fabs(fcLayer.db[i] - expected_db[i]) < 1e-4);
-}
-    
+    if (biases_correct) {
+        std::cout << "Bias updates are correct." << std::endl;
+    } else {
+        std::cout << "Bias updates are incorrect." << std::endl;
+        std::cout << "Expected Biases:" << std::endl;
+        for (const auto& val : expected_biases) {
+            std::cout << val << " ";
+        }
+        std::cout << std::endl;
+        std::cout << "Actual Biases:" << std::endl;
+        for (const auto& val : biases) {
+            std::cout << val << " ";
+        }
+        std::cout << std::endl;
+    }
 
-    std::cout << "Backward propagation test completed successfully.\n";
+    if (weights_correct && biases_correct) {
+        std::cout << "Adam Optimizer Test Passed Successfully." << std::endl;
+    } else {
+        std::cout << "Adam Optimizer Test Failed." << std::endl;
+    }
 
     return 0;
 }

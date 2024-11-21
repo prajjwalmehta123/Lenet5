@@ -153,6 +153,7 @@ std::pair<std::vector<std::vector<float>>, std::vector<float>> LeNet5::initializ
 }
 
 void LeNet5::printShape(const std::vector<std::vector<float>>& tensor, const std::string& name) {
+    return;
     if (tensor.empty()) {
          std::cout << name << " shape: [0]" << std::endl;
          return;

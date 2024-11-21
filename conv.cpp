@@ -13,7 +13,7 @@ ConvolutionLayer::ConvolutionLayer(int inputChannels, int outputChannels, int ke
 
 void ConvolutionLayer::initializeWeights() {
     std::default_random_engine generator;
-    // Xavier/Glorot initialization
+    //  He initialization for ReLU activation
     float stddev = std::sqrt(2.0f / (inputChannels * kernelSize * kernelSize));
     std::normal_distribution<float> distribution(0.0f, stddev);
 
