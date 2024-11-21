@@ -13,7 +13,9 @@ ConvolutionLayer::ConvolutionLayer(int inputChannels, int outputChannels, int ke
 
 void ConvolutionLayer::initializeWeights() {
     std::default_random_engine generator;
-    std::normal_distribution<float> distribution(0.0f, 0.05f);
+    // Xavier/Glorot initialization
+    float stddev = std::sqrt(2.0f / (inputChannels * kernelSize * kernelSize));
+    std::normal_distribution<float> distribution(0.0f, stddev);
 
     weights.resize(outputChannels, std::vector<std::vector<std::vector<float>>>(inputChannels,
                     std::vector<std::vector<float>>(kernelSize, std::vector<float>(kernelSize))));
@@ -121,7 +123,6 @@ std::vector<std::vector<float>> ConvolutionLayer::backward(const std::vector<std
     std::vector<std::vector<float>> gradInputBatch(batchSize, std::vector<float>(inputDataBatch[0].size(), 0.0f));
 
     // Process each sample in the batch
-    #pragma omp parallel for
     for (size_t b = 0; b < batchSize; ++b) {
         const std::vector<float>& inputFlat = inputDataBatch[b];        // [inputChannels * inputHeight * inputWidth]
         const std::vector<float>& gradOutputFlat = gradOutputBatch[b];  // [outputChannels * outputHeight * outputWidth]

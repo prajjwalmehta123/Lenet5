@@ -24,13 +24,14 @@ std::vector<std::vector<float>> FCLayer::forward_prop(const std::vector<std::vec
 
     int batch_size = input_array.size();
     int output_size = weight.size();
+    int input_size = input_array[0].size();
 
-    // Compute output = input_array * weight + bias
     std::vector<std::vector<float>> output(batch_size, std::vector<float>(output_size, 0.0f));
-    for (int i = 0; i < batch_size; ++i) {
-        for (int j = 0; j < output_size; ++j) {
-            for (int k = 0; k < weight.size(); ++k) {
-                output[i][j] += input_array[i][k] * weight[k][j];
+
+    for (int i = 0; i < batch_size; ++i) {              // Loop over batch
+        for (int j = 0; j < output_size; ++j) {         // Loop over outputs
+            for (int k = 0; k < input_size; ++k) {      // Loop over inputs
+                output[i][j] += input_array[i][k] * weight[j][k];
             }
             output[i][j] += bias[j]; // Add bias
         }

@@ -15,11 +15,11 @@ LeNet5::LeNet5(){
     */
     c1_layer = ConvolutionLayer(kernel_shape["C1"][2], kernel_shape["C1"][3], kernel_shape["C1"][0], hparameters_convlayer["stride"], hparameters_convlayer["padding"]);
     a1 = Activation();
-    s2_layer = subsampling(hparameters_pooling["f"],hparameters_pooling["stride"],kernel_shape["C1"][3]);
+    s2_layer = subsampling(2,2,28,6);
     a2 = Activation();
     c3_layer = ConvolutionLayer(kernel_shape["C3"][2], kernel_shape["C3"][3], kernel_shape["C3"][0], hparameters_convlayer["stride"], hparameters_convlayer["padding"]);
     a3 = Activation();
-    s4_layer = subsampling(hparameters_pooling["f"],hparameters_pooling["stride"],kernel_shape["C3"][3]);
+    s4_layer = subsampling(2,2,10,16);
     a4 = Activation();
     f5_layer = FCLayer({kernel_shape["F5"][0], kernel_shape["F5"][1]});
     a5 = Activation();
@@ -153,12 +153,11 @@ std::pair<std::vector<std::vector<float>>, std::vector<float>> LeNet5::initializ
 }
 
 void LeNet5::printShape(const std::vector<std::vector<float>>& tensor, const std::string& name) {
-    return;
-    // if (tensor.empty()) {
-    //     std::cout << name << " shape: [0]" << std::endl;
-    //     return;
-    // }
-    // size_t rows = tensor.size();
-    // size_t cols = tensor[0].size();
-    // std::cout << name << " shape: [" << rows << " x " << cols << "]" << std::endl;
+    if (tensor.empty()) {
+         std::cout << name << " shape: [0]" << std::endl;
+         return;
+     }
+    size_t rows = tensor.size();
+    size_t cols = tensor[0].size();
+    std::cout << name << " shape: [" << rows << " x " << cols << "]" << std::endl;
 }

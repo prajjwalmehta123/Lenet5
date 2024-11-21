@@ -2,26 +2,24 @@
 
 using namespace std;
 subsampling::subsampling() {
-
 }
 
-subsampling::subsampling(int kernel_size, int stride, int image_kernel_size) : kernel_size(kernel_size), stride(stride), image_kernel_size(image_kernel_size) {
+subsampling::subsampling(int kernel_size, int stride,int image_size, int num_feature_maps) : kernel_size(kernel_size), stride(stride),image_size(image_size), num_feature_maps(num_feature_maps) {
 }
 
 std::vector<std::vector<float>> subsampling::average_pooling(const vector<vector<float>>& inputBatch) {
-
     inputDataBatch = inputBatch;
     size_t batch_size = inputBatch.size();
-    size_t totalInputSize = inputBatch[0].size();
-    int featureSize = totalInputSize / image_kernel_size;
-    int featureHeight = static_cast<int>(std::sqrt(featureSize));
-    int featureWidth = featureHeight;
+
+    int featureSize = (image_size) * (image_size); // Size of one feature map
+    int featureHeight = image_size;
+    int featureWidth = image_size;
 
     int pooled_ht = (featureHeight - kernel_size) / stride + 1;
     int pooled_wdth = (featureWidth - kernel_size) / stride + 1;
     int pooledFeatureSize = pooled_ht * pooled_wdth;
     output_image_size = pooled_ht;
-    int totalOutputSize = image_kernel_size * pooledFeatureSize;
+    int totalOutputSize = num_feature_maps * pooledFeatureSize;
 
     std::vector<std::vector<float>> output(batch_size, std::vector<float>(totalOutputSize, 0.0f));
 
@@ -31,11 +29,9 @@ std::vector<std::vector<float>> subsampling::average_pooling(const vector<vector
         std::vector<float> pooled_image(totalOutputSize, 0.0f);
 
         // Loop over each feature map
-        for (int feature = 0; feature < image_kernel_size; ++feature) {
+        for (int feature = 0; feature < num_feature_maps; ++feature) {
             int featureStartIndex = feature * featureSize;
             std::vector<float> featureMap(image.begin() + featureStartIndex, image.begin() + featureStartIndex + featureSize);
-
-            std::vector<float> pooledFeatureMap(pooledFeatureSize);
 
             // Perform average pooling on the feature map
             for (int i = 0; i < pooled_ht; ++i) {
@@ -49,17 +45,16 @@ std::vector<std::vector<float>> subsampling::average_pooling(const vector<vector
                             sum += featureMap[index];
                         }
                     }
-                    pooledFeatureMap[i * pooled_wdth + j] = sum / (kernel_size * kernel_size);
+                    int pooledIndex = feature * pooledFeatureSize + i * pooled_wdth + j;
+                    pooled_image[pooledIndex] = sum / (kernel_size * kernel_size);
                 }
             }
-            int pooledStartIndex = feature * pooledFeatureSize;
-            std::copy(pooledFeatureMap.begin(), pooledFeatureMap.end(), pooled_image.begin() + pooledStartIndex);
         }
-
         output[image_idx] = pooled_image;
     }
     return output;
 }
+
 
 std::vector<std::vector<float>> subsampling::backward(const std::vector<std::vector<float>>& gradOutputBatch) {
     size_t batchSize = gradOutputBatch.size();
@@ -69,13 +64,12 @@ std::vector<std::vector<float>> subsampling::backward(const std::vector<std::vec
     std::vector<std::vector<float>> gradInputBatch(batchSize, std::vector<float>(totalInputSize, 0.0f));
 
     // Perform backpropagation
-    #pragma omp parallel for
     for (size_t image_idx = 0; image_idx < batchSize; ++image_idx) {
         const std::vector<float>& gradOutputFlat = gradOutputBatch[image_idx];
         std::vector<float>& gradInputFlat = gradInputBatch[image_idx];
 
         // Loop over each feature map
-        for (int feature = 0; feature < image_kernel_size; ++feature) {
+        for (int feature = 0; feature < num_feature_maps; ++feature) {
             int featureInputStartIdx = feature * inputHeight * inputWidth;
             int featureOutputStartIdx = feature * pooledHeight * pooledWidth;
 

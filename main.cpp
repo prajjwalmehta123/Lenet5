@@ -1,6 +1,5 @@
 #include <iostream>
 #include "lenet5.h"
-#include "conv.h"
 #include "dataloader.h"
 
 int main()
@@ -28,11 +27,11 @@ int main()
                 std::cerr << "Error: Environment variable " << mnist_label_var << " is not set!" << std::endl;
                 return 1;
         }
-        dataloader dataloader(mnist_image_path,mnist_label_path,64);
+        dataloader dataloader(mnist_image_path,mnist_label_path,32);
         LeNet5 lenet;
         int correct = 0;
         for(int epoch = 1; epoch <= 10; ++epoch) {
-                for(int i = 0; i<2;i++) {
+                for(int i = 0; i<dataloader.num_batches;i++) {
                         auto x =dataloader.get_batch();
                         int batch_correct  = lenet.Forward_Propagation(x.first, x.second);
                         lenet.Back_Propagation(x.second);
