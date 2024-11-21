@@ -30,31 +30,31 @@ LeNet5::LeNet5(){
 
 // Forward Propagation
 int LeNet5::Forward_Propagation(std::vector<std::vector<float>> batch_images, std::vector<int>batch_labels) {
-    std::vector<std::vector<float>> c1_out = c1_layer.forward(batch_images, imageHeight, imageWidth);
-    printShape(c1_out, "c1_out");
-    std::vector<std::vector<float>> a1_out = a1.forwardProp(c1_out);
-    printShape(a1_out, "a1_out");
-    std::vector<std::vector<float>> s2_out = s2_layer.average_pooling(a1_out);
-    printShape(s2_out, "s2_out");
-    s2_out = a2.forwardProp(s2_out);
-    printShape(s2_out, "a2_out");
-    std::vector<std::vector<float>> c3_out = c3_layer.forward(s2_out, s2_layer.output_image_size, s2_layer.output_image_size);
-    printShape(c3_out, "c3_out");
-    std::vector<std::vector<float>> a3_out = a3.forwardProp(c3_out);
-    printShape(a3_out, "a3_out");
-    std::vector<std::vector<float>> s4_out = s4_layer.average_pooling(a3_out);
-    printShape(s4_out, "s4_out");
-    s4_out = a4.forwardProp(s4_out);
-    printShape(s4_out, "a4_out");
-    std::vector<std::vector<float>> f5_out = f5_layer.forward_prop(s4_out);
-    printShape(f5_out, "f5_out");
-    std::vector<std::vector<float>> a5_out = a5.forwardProp(f5_out);
-    printShape(a5_out, "a5_out");
-    std::vector<std::vector<float>> f6_out = f6_layer.forward_prop(a5_out);
-    printShape(f6_out, "f6_out");
-    std::vector<std::vector<float>> a4_out = a6.forwardProp(f6_out);
-    printShape(a4_out, "a6_out");
-    logits = o1.forwardProp(a4_out);
+    std::vector<std::vector<float>> out = c1_layer.forward(batch_images, imageHeight, imageWidth);
+    printShape(out, "c1_out");
+    out = a1.forwardProp(out);
+    printShape(out, "a1_out");
+    out = s2_layer.average_pooling(out);
+    printShape(out, "s2_out");
+    out = a2.forwardProp(out);
+    printShape(out, "a2_out");
+    out = c3_layer.forward(out, s2_layer.output_image_size, s2_layer.output_image_size);
+    printShape(out, "c3_out");
+    out = a3.forwardProp(out);
+    printShape(out, "a3_out");
+    out = s4_layer.average_pooling(out);
+    printShape(out, "s4_out");
+    out = a4.forwardProp(out);
+    printShape(out, "a4_out");
+    out = f5_layer.forward_prop(out);
+    printShape(out, "f5_out");
+    out = a5.forwardProp(out);
+    printShape(out, "a5_out");
+    out = f6_layer.forward_prop(out);
+    printShape(out, "f6_out");
+    out = a6.forwardProp(out);
+    printShape(out, "a6_out");
+    logits = o1.forwardProp(out);
     printShape(logits, "logits");
     labels = Output_Layer(logits,batch_images.size());
     //std::cout<<"Label size: "<<labels.size();
@@ -80,32 +80,32 @@ void LeNet5::Back_Propagation(std::vector<int>batch_labels) {
             }
         }
     }
-    std::vector<std::vector<float>> o1_back = o1.backProp(dy_pred);
-    printShape(o1_back, "o1_back");
-    std::vector<std::vector<float>> a6_back = a6.backProp(o1_back);
-    printShape(a6_back, "a6_back");
-    std::vector<std::vector<float>> f6_back = f6_layer.back_prop(a6_back);
-    printShape(f6_back, "f6_back");
-    std::vector<std::vector<float>> a5_back = a5.backProp(f6_back);
-    printShape(a5_back, "a5_back");
-    std::vector<std::vector<float>> f5_back = f5_layer.back_prop(a5_back);
-    printShape(f5_back, "f5_back");
-    std::vector<std::vector<float>> a4_back = a4.backProp(f5_back);
-    printShape(a4_back, "a4_back");
-    std::vector<std::vector<float>> s4_back = s4_layer.backward(a4_back);
-    printShape(s4_back, "s4_back");
-    std::vector<std::vector<float>> a3_back = a3.backProp(s4_back);
-    printShape(a3_back, "a3_back");
-    std::vector<std::vector<float>> c3_back = c3_layer.backward(a3_back);
-    printShape(c3_back, "c3_back");
-    std::vector<std::vector<float>> a2_back = a2.backProp(c3_back);
-    printShape(a2_back, "a2_back");
-    std::vector<std::vector<float>> s2_back = s2_layer.backward(a2_back);
-    printShape(s2_back, "s2_back");
-    std::vector<std::vector<float>> a1_back = a1.backProp(s2_back);
-    printShape(a1_back, "a1_back");
-    std::vector<std::vector<float>> c1_back = c1_layer.backward(a1_back);
-    printShape(c1_back, "c1_back");
+    std::vector<std::vector<float>> back_out = o1.backProp(dy_pred);
+    printShape(back_out, "o1_back");
+    back_out = a6.backProp(back_out);
+    printShape(back_out, "a6_back");
+    back_out = f6_layer.back_prop(back_out);
+    printShape(back_out, "f6_back");
+    back_out = a5.backProp(back_out);
+    printShape(back_out, "a5_back");
+    back_out = f5_layer.back_prop(back_out);
+    printShape(back_out, "f5_back");
+    back_out = a4.backProp(back_out);
+    printShape(back_out, "a4_back");
+    back_out = s4_layer.backward(back_out);
+    printShape(back_out, "s4_back");
+    back_out = a3.backProp(back_out);
+    printShape(back_out, "a3_back");
+    back_out = c3_layer.backward(back_out);
+    printShape(back_out, "c3_back");
+    back_out = a2.backProp(back_out);
+    printShape(back_out, "a2_back");
+    back_out = s2_layer.backward(back_out);
+    printShape(back_out, "s2_back");
+    back_out = a1.backProp(back_out);
+    printShape(back_out, "a1_back");
+    back_out = c1_layer.backward(back_out);
+    printShape(back_out, "c1_back");
 
 }
 
@@ -153,11 +153,12 @@ std::pair<std::vector<std::vector<float>>, std::vector<float>> LeNet5::initializ
 }
 
 void LeNet5::printShape(const std::vector<std::vector<float>>& tensor, const std::string& name) {
-    if (tensor.empty()) {
-        std::cout << name << " shape: [0]" << std::endl;
-        return;
-    }
-    size_t rows = tensor.size();
-    size_t cols = tensor[0].size();
-    std::cout << name << " shape: [" << rows << " x " << cols << "]" << std::endl;
+    return;
+    // if (tensor.empty()) {
+    //     std::cout << name << " shape: [0]" << std::endl;
+    //     return;
+    // }
+    // size_t rows = tensor.size();
+    // size_t cols = tensor[0].size();
+    // std::cout << name << " shape: [" << rows << " x " << cols << "]" << std::endl;
 }

@@ -28,7 +28,7 @@ int main()
                 std::cerr << "Error: Environment variable " << mnist_label_var << " is not set!" << std::endl;
                 return 1;
         }
-        dataloader dataloader(mnist_image_path,mnist_label_path,32);
+        dataloader dataloader(mnist_image_path,mnist_label_path,64);
         LeNet5 lenet;
         int correct = 0;
         for(int epoch = 1; epoch <= 10; ++epoch) {
@@ -41,5 +41,4 @@ int main()
                 float accuracy = float(correct)/float(dataloader.num_batches);
                 std::cout<<"Accuracy for this epoch: "<<accuracy<<std::endl;
         }
-
 }
