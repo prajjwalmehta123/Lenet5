@@ -80,16 +80,17 @@ std::vector<std::vector<float>> FCLayer::back_prop(const std::vector<std::vector
 }
 
 // Initialize weights and biases
-std::pair<std::vector<std::vector<float>>, std::vector<float>> FCLayer::initialize(int rows, int cols) {
-    std::vector<std::vector<float>> w(rows, std::vector<float>(cols, 0.0f));
-    std::vector<float> b(cols, 0.01f);
+std::pair<std::vector<std::vector<float>>, std::vector<float>> FCLayer::initialize(int n_in, int n_out) {
+    std::vector<std::vector<float>> w(n_in, std::vector<float>(n_out, 0.0f));
+    std::vector<float> b(n_out, 0.0f); // Initialize biases to zero
 
     std::random_device rd;
     std::mt19937 gen(rd());
-    std::normal_distribution<float> d(0.0f, 0.1f);
+    float stddev = sqrt(2.0f / n_in);
+    std::normal_distribution<float> d(0.0f, stddev);
 
-    for (int i = 0; i < rows; ++i) {
-        for (int j = 0; j < cols; ++j) {
+    for (int i = 0; i < n_in; ++i) {
+        for (int j = 0; j < n_out; ++j) {
             w[i][j] = d(gen);
         }
     }

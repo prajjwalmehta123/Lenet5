@@ -34,7 +34,7 @@ int main()
                 for(int i = 0; i<dataloader.num_batches;i++) {
                         auto x =dataloader.get_batch();
                         int batch_correct  = lenet.Forward_Propagation(x.first, x.second);
-                        lenet.Back_Propagation(x.second);
+                        // lenet.Back_Propagation(x.second);
                         correct = batch_correct+correct;
                 }
                 float accuracy = float(correct)/float(dataloader.num_batches);
