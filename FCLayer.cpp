@@ -2,11 +2,12 @@
 #include <vector>
 #include <random>
 #include <cmath>
+#include <omp.h>
 #include "FCLayer.h"
 
 // Default Constructor
 FCLayer::FCLayer() {
-    AdamOptimizer adam(0.001);
+    AdamOptimizer adam(0.01, 0.9, 0.99, 1e-8);
 }
 
 // Constructor
@@ -15,7 +16,6 @@ FCLayer::FCLayer(const std::pair<int, int>& weight_shape, const std::string& ini
     int cols = weight_shape.second;
     // Initialize weights and biases
     std::tie(weight, bias) = initialize(rows, cols);
-    // std::cout<<"row"<<rows<<"cols"<<cols<<std::endl;
 }
 
 // Forward Propagation
@@ -28,12 +28,15 @@ std::vector<std::vector<float>> FCLayer::forward_prop(const std::vector<std::vec
 
     std::vector<std::vector<float>> output(batch_size, std::vector<float>(output_size, 0.0f));
 
-    for (int i = 0; i < batch_size; ++i) {              // Loop over batch
-        for (int j = 0; j < output_size; ++j) {         // Loop over outputs
-            for (int k = 0; k < input_size; ++k) {      // Loop over inputs
-                output[i][j] += input_array[i][k] * weight[j][k];
+    #pragma omp parallel for
+    for (int i = 0; i < batch_size; ++i) {
+        for (int j = 0; j < output_size; ++j) {
+            float sum = bias[j]; // Start with bias
+            #pragma omp simd reduction(+:sum)
+            for (int k = 0; k < input_size; ++k) {
+                sum += input_array[i][k] * weight[j][k];
             }
-            output[i][j] += bias[j]; // Add bias
+            output[i][j] = sum;
         }
     }
     return output;
@@ -51,18 +54,38 @@ std::vector<std::vector<float>> FCLayer::back_prop(const std::vector<std::vector
     db = std::vector<float>(output_size, 0.0f);
 
     // Compute gradients
-    for (int i = 0; i < batch_size; ++i) {
-        for (int j = 0; j < output_size; ++j) {
-            db[j] += dZ[i][j];  // Gradient w.r.t biases
+    #pragma omp parallel
+    {
+        // Thread-local storage for partial gradient accumulations
+        std::vector<std::vector<float>> local_dW(output_size, std::vector<float>(input_size, 0.0f));
+        std::vector<float> local_db(output_size, 0.0f);
 
-            for (int k = 0; k < input_size; ++k) {
-                dW[j][k] += dZ[i][j] * input_array[i][k];        // Gradient w.r.t weights
-                dA_prev[i][k] += dZ[i][j] * weight[j][k];        // Gradient w.r.t inputs
+        #pragma omp for
+        for (int i = 0; i < batch_size; ++i) {
+            for (int j = 0; j < output_size; ++j) {
+                local_db[j] += dZ[i][j];
+                for (int k = 0; k < input_size; ++k) {
+                    local_dW[j][k] += dZ[i][j] * input_array[i][k];
+                    #pragma omp atomic
+                    dA_prev[i][k] += dZ[i][j] * weight[j][k];
+                }
+            }
+        }
+
+        // Merge local gradients into global ones
+        #pragma omp critical
+        {
+            for (int j = 0; j < output_size; ++j) {
+                db[j] += local_db[j];
+                for (int k = 0; k < input_size; ++k) {
+                    dW[j][k] += local_dW[j][k];
+                }
             }
         }
     }
 
     // Average gradients over the batch
+    #pragma omp parallel for
     for (int j = 0; j < output_size; ++j) {
         db[j] /= static_cast<float>(batch_size);
         for (int k = 0; k < input_size; ++k) {
@@ -87,6 +110,7 @@ std::pair<std::vector<std::vector<float>>, std::vector<float>> FCLayer::initiali
     std::mt19937 gen(rd());
     std::normal_distribution<float> d(0.0f, 0.1f);
 
+    #pragma omp parallel for collapse(2)
     for (int i = 0; i < rows; ++i) {
         for (int j = 0; j < cols; ++j) {
             w[i][j] = d(gen);

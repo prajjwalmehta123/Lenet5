@@ -71,12 +71,12 @@ int LeNet5::Forward_Propagation(std::vector<std::vector<float>> batch_images, st
 // Back Propagation
 void LeNet5::Back_Propagation(std::vector<int>batch_labels) {
     std::vector<std::vector<float>> dy_pred(batch_labels.size(), std::vector<float>(kernel_shape["OUTPUT"][0], 0));
-    for (int i = 0; i < batch_labels.size(); i++) {
-        for (int j = 0; j < kernel_shape["OUTPUT"][0]; j++) {
+    //std::vector<std::vector<float>> dy_pred(batch_labels.size(), std::vector<float>(logits[0].size(), 0.0f));
+    for (size_t i = 0; i < batch_labels.size(); ++i) {
+        for (size_t j = 0; j < logits[i].size(); ++j) {
+            dy_pred[i][j] = logits[i][j]; // Copy softmax probabilities
             if (j == batch_labels[i]) {
-                dy_pred[i][j] = 1 - logits[i][j];
-            } else {
-                dy_pred[i][j] = -1 * logits[i][j];
+                dy_pred[i][j] -= 1.0f; // Subtract 1 for the correct class
             }
         }
     }

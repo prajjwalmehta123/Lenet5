@@ -27,17 +27,23 @@ int main()
                 std::cerr << "Error: Environment variable " << mnist_label_var << " is not set!" << std::endl;
                 return 1;
         }
-        dataloader dataloader(mnist_image_path,mnist_label_path,32);
+        dataloader dataloader(mnist_image_path,mnist_label_path,128, false);
         LeNet5 lenet;
         int correct = 0;
+        auto start = std::chrono::high_resolution_clock::now();
         for(int epoch = 1; epoch <= 10; ++epoch) {
                 for(int i = 0; i<dataloader.num_batches;i++) {
                         auto x =dataloader.get_batch();
+                        std::cout<<i<<": ";
                         int batch_correct  = lenet.Forward_Propagation(x.first, x.second);
                         lenet.Back_Propagation(x.second);
                         correct = batch_correct+correct;
                 }
                 float accuracy = float(correct)/60000;
-                std::cout<<"Accuracy for this epoch: "<<accuracy<<std::endl;
+                std::cout<<"Accuracy for this epoch: "<<accuracy * 100<<std::endl;
+                auto end = std::chrono::high_resolution_clock::now();
+                auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(end - start);
+                // Print the duration in milliseconds
+                std::cout << "Time taken: " << duration.count() << " milliseconds" << std::endl;
         }
 }
