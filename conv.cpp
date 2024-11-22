@@ -35,15 +35,14 @@ void ConvolutionLayer::initializeWeights() {
 
 std::vector<std::vector<float>> ConvolutionLayer::forward(const std::vector<std::vector<float>>& inputBatch, int imageHeight, int imageWidth) {
     inputDataBatch = inputBatch; // Save input for backward pass
-
+#ifdef ENABLE_GPU
     if (gpuComputations) {
         std::cout << "GPU computations not yet implemented." << std::endl;
         return {};
-    } else {
-        // CPU computations
+    }
+#endif
         outputDataBatch = conv2DCPU(inputBatch, imageHeight, imageWidth);
         return outputDataBatch;
-    }
 }
 
 // CPU convolution for a batch with flattened images
@@ -221,7 +220,9 @@ void ConvolutionLayer::updateWeights() {
     biasOptimizer.update_bias(biases, gradBiases);
 }
 
-
-void ConvolutionLayer::setGPUComputations(std::shared_ptr<GPUComputations> gpuComputations) {
-    this->gpuComputations = gpuComputations;
+#ifdef ENABLE_GPU
+void setGPUComputations(std::shared_ptr<ConvGPU> ConvGPU){
+    this->convGPU = convGPU;
 }
+#endif
+

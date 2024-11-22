@@ -6,10 +6,15 @@
 #include <vector>
 #include <memory>
 #include <iostream>
+#include <cstring>
 #include "adam.h"
-#include <omp.h> // Include OpenMP
+#include <omp.h>
 
-class GPUComputations; // Forward declaration
+#ifdef ENABLE_GPU
+#include "convgpu.h"
+#endif
+
+class ConvGPU; // Forward declaration
 
 class ConvolutionLayer {
 public:
@@ -20,13 +25,10 @@ public:
     // Forward and Backward Passes
     std::vector<std::vector<float>> forward(const std::vector<std::vector<float>>& inputBatch, int imageHeight, int imageWidth);
     std::vector<std::vector<float>> backward(const std::vector<std::vector<float>>& gradOutputBatch);
-
-    // Update Weights
     void updateWeights();
-
-    // Set GPU Computations Handler
-    void setGPUComputations(std::shared_ptr<GPUComputations> gpuComputations);
-
+#ifdef ENABLE_GPU
+    void setGPUComputations(std::shared_ptr<ConvGPU> ConvGPU);
+#endif
     // Utility
     static int calculateOutputSize(int inputSize, int kernelSize, int stride, int padding);
 
@@ -45,10 +47,15 @@ private:
 
     std::vector<std::vector<AdamOptimizer>> weightOptimizers;
     AdamOptimizer biasOptimizer;
-    // GPU computations handler
-    std::shared_ptr<GPUComputations> gpuComputations;
+
+#ifdef ENABLE_GPU
+    std::shared_ptr<ConvGPU> ConvGPU;
+#endif
     void initializeWeights();
     std::vector<std::vector<float>> conv2DCPU(const std::vector<std::vector<float>>& inputBatch, int imageHeight, int imageWidth);
+#ifdef ENABLE_GPU
+    std::vector<std::vector<float>> conv2DGPU(const std::vector<std::vector<float>>& inputBatch, int imageHeight, int imageWidth);
+#endif
 };
 
 #endif // CONV_H

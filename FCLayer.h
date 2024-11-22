@@ -5,6 +5,7 @@
 #include <string>
 #include <utility>
 #include <random>
+#include <tuple>
 #include "adam.h"
 
 class FCLayer {

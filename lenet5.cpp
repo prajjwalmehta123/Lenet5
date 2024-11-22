@@ -1,6 +1,7 @@
 #include "lenet5.h"
 #include <iostream>
 #include <random>
+#include <chrono>
 
 // Constructor
 LeNet5::LeNet5(){
