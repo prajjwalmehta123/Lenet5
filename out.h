@@ -11,8 +11,7 @@ class OutputLayer {
 public:
     OutputLayer();
     // Constructor to initialize weights and biases
-    OutputLayer(int inputSize, int outputSize);
-    AdamOptimizer adam;
+    OutputLayer(int outputSize, int inputSize);
 
     // Forward pass through the output layer
     std::vector<std::vector<float>> forwardProp(const std::vector<std::vector<float>>& input);
@@ -20,23 +19,21 @@ public:
     // Backward pass through the output layer
     std::vector<std::vector<float>> backProp(const std::vector<std::vector<float>>& dLoss);
 
-    // Update weights and biases
-    void updateWeights(float learningRate);
-    // Initialize weights with small random values
+private:
+
+    std::vector<std::vector<float>> weights; // 2D vector for weights
+    std::vector<float> biases;              // 1D vector for biases
+    std::vector<std::vector<float>> input;  // Cached input
+    AdamOptimizer adam;                     // Adam optimizer instance
+
+    size_t numOutputs;                      // Number of outputs
+    size_t numInputs;                       // Number of inputs
+
+    std::vector<std::vector<float>> weightsTransposed; // Pre-transposed weights for efficiency
+
     void initializeWeights();
-
-    // Softmax activation function
+    void transposeWeights();
     std::vector<float> softmax(const std::vector<float>& z);
-
-// private:
-    std::vector<std::vector<float>> weights; // Weight matrix [outputSize x inputSize]
-    std::vector<float> biases;              // Bias vector [outputSize]
-    std::vector<std::vector<float>> input;               // Cached input
-    std::vector<float> output;              // Cached output
-    std::vector<std::vector<float>> dWeights; // Gradients for weights
-    std::vector<float> dBiases;              // Gradients for biases
-
-    
 };
 
 #endif // OUT_H

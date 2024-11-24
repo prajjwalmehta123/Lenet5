@@ -11,21 +11,17 @@ class Activation {
 public:
     // Constructor to select the activation mode
     Activation();
-
     // Forward propagation
     std::vector<std::vector<float>> forwardProp(const std::vector<std::vector<float>>& input);
 
     // Backward propagation
     std::vector<std::vector<float>> backProp(const std::vector<std::vector<float>>& dZ);
 
-// private:
+private:
     // Cached input
     std::vector<std::vector<float>> inputImage;
-
-    // Function pointers for activation and its derivatives
-    std::function<float(float)> act;
-    std::function<float(float)> d_act;
-    std::function<float(float)> d2_act;
+    inline float relu(float x) { return x > 0 ? x : 0; }
+    inline float d_relu(float x) { return x > 0 ? 1 : 0; }
 
     // Initialize activation functions and their derivatives
     void initializeFunctions();

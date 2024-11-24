@@ -1,52 +1,45 @@
 #include <iostream>
-#include <cmath>
 #include <vector>
-#include <string>
 #include <functional>
-#include <unordered_map>
+#include <cmath>
+#include <omp.h>
 #include "activation.h"
 
-std::vector<std::vector<float>> inputImage; // Cached input
-
-// Activation function pointers
-std::function<float(float)> act;
-std::function<float(float)> d_act;
-std::function<float(float)> d2_act;
-
-    // Initialize functions and derivatives
-void Activation::initializeFunctions() {
-    // ReLU
-    this->act = [](float x) { return x > 0 ? x : 0; };
-    this->d_act = [](float x) { return x > 0 ? 1 : 0; };
-    this->d2_act = [](float x) { return 0; };
-}
-
-// Constructor to initialize the activation mode
+// Constructor: Initialize any required data
 Activation::Activation() {
-    initializeFunctions();
+    // No specific initialization needed for ReLU
 }
 
-// Forward propagation
+// Forward Propagation
 std::vector<std::vector<float>> Activation::forwardProp(const std::vector<std::vector<float>>& input) {
+    size_t batch_size = input.size();
+    size_t feature_size = input[0].size();
     inputImage = input; // Cache input for backpropagation
-    std::vector<std::vector<float>> output(input.size(), std::vector<float>(input[0].size()));
 
-    for (size_t i = 0; i < input.size(); ++i) {
-        for (size_t j = 0; j < input[i].size(); ++j) {
-            output[i][j] = act(input[i][j]);
+    std::vector<std::vector<float>> output(batch_size, std::vector<float>(feature_size));
+
+    #pragma omp parallel for collapse(2)
+    for (size_t b = 0; b < batch_size; ++b) {
+        for (size_t f = 0; f < feature_size; ++f) {
+            output[b][f] = relu(input[b][f]);
         }
     }
+
     return output;
 }
 
-// Backward propagation
+// Backward Propagation
 std::vector<std::vector<float>> Activation::backProp(const std::vector<std::vector<float>>& dZ) {
-    std::vector<std::vector<float>> dA(dZ.size(), std::vector<float>(dZ[0].size()));
+    size_t batch_size = dZ.size();
+    size_t feature_size = dZ[0].size();
+    std::vector<std::vector<float>> dA(batch_size, std::vector<float>(feature_size));
 
-    for (size_t i = 0; i < dZ.size(); ++i) {
-        for (size_t j = 0; j < dZ[i].size(); ++j) {
-            dA[i][j] = dZ[i][j] * d_act(inputImage[i][j]);
+    #pragma omp parallel for collapse(2)
+    for (size_t b = 0; b < batch_size; ++b) {
+        for (size_t f = 0; f < feature_size; ++f) {
+            dA[b][f] = dZ[b][f] * d_relu(inputImage[b][f]);
         }
     }
+
     return dA;
 }

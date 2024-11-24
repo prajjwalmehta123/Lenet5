@@ -1,6 +1,7 @@
 #include <iostream>
 #include "lenet5.h"
 #include "dataloader.h"
+#include<chrono>
 
 int main()
 {
@@ -46,4 +47,5 @@ int main()
                 // Print the duration in milliseconds
                 std::cout << "Time taken: " << duration.count() << " milliseconds" << std::endl;
         }
+        
 }
