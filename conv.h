@@ -31,6 +31,20 @@ private:
     int kernelSize;
     int stride;
     int padding;
+    std::vector<float> weights_flat; // [outChannels * inChannels * kernelSize * kernelSize]
+    std::vector<float> gradWeights_flat;
+
+    // Add helper methods
+    int get_weight_index(int oc, int ic, int kh, int kw) const {
+        const int index = ((oc * inputChannels + ic) * kernelSize + kh) * kernelSize + kw;
+        return (index < weights_flat.size()) ? index : 0;
+    }
+
+    // Cache frequently used values
+    int outputHeight;
+    int outputWidth;
+    int paddedHeight;
+    int paddedWidth;
     std::vector<std::vector<std::vector<std::vector<float>>>> weights; // [outChannels][inChannels][kernelSize][kernelSize]
     std::vector<float> biases; // [outChannels]
     std::vector<std::vector<std::vector<std::vector<float>>>> gradWeights; // [outChannels][inChannels][kernelSize][kernelSize]
@@ -41,6 +55,14 @@ private:
     void initializeWeights();
     std::vector<std::vector<AdamOptimizer>> weightOptimizers;
     AdamOptimizer biasOptimizer;
+    void validateDimensions(const std::vector<std::vector<float>>& input, int height, int width) const {
+        if (input.empty() || input[0].empty()) {
+            throw std::runtime_error("Empty input");
+        }
+        if (height * width * inputChannels != input[0].size()) {
+            throw std::runtime_error("Input dimensions mismatch");
+        }
+    }
 };
 
 #endif // CONV_H

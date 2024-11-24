@@ -4,169 +4,108 @@
 #include <chrono>
 
 // Constructor
-LeNet5::LeNet5(){
-    /*
-    for (const auto& pair : kernel_shape) {
-        std::cout << pair.first << ": ";
-        for (const auto& val : pair.second) {
-            std::cout << val << " ";
-        }
-        std::cout << std::endl;
-    }
-    */
-    c1_layer = ConvolutionLayer(kernel_shape["C1"][2], kernel_shape["C1"][3], kernel_shape["C1"][0], hparameters_convlayer["stride"], hparameters_convlayer["padding"]);
-    a1 = Activation();
-    s2_layer = subsampling(2,2,28,6);
-    a2 = Activation();
-    c3_layer = ConvolutionLayer(kernel_shape["C3"][2], kernel_shape["C3"][3], kernel_shape["C3"][0], hparameters_convlayer["stride"], hparameters_convlayer["padding"]);
-    a3 = Activation();
-    s4_layer = subsampling(2,2,10,16);
-    a4 = Activation();
-    f5_layer = FCLayer({kernel_shape["F5"][0], kernel_shape["F5"][1]});
-    a5 = Activation();
-    f6_layer = FCLayer({kernel_shape["F6"][0], kernel_shape["F6"][1]});
-    a6 = Activation();
-    o1 = OutputLayer({kernel_shape["OUTPUT"][0], kernel_shape["OUTPUT"][1]});
+LeNet5::LeNet5()
+    : c1_layer(1, CONV1_CHANNELS, 5, 1, 0),  // in_channels, out_channels, kernel_size, stride, padding
+      s2_layer(2, 2, 28, CONV1_CHANNELS),    // kernel_size, stride, input_size, num_feature_maps
+      c3_layer(CONV1_CHANNELS, CONV3_CHANNELS, 5, 1, 0),
+      s4_layer(2, 2, 10, CONV3_CHANNELS),
+      f5_layer({FC5_NEURONS, 400}),          // output_size, input_size
+      f6_layer({FC6_NEURONS, FC5_NEURONS}),
+      o1({OUTPUT_NEURONS, FC6_NEURONS}) {
 }
 
 // Forward Propagation
-int LeNet5::Forward_Propagation(std::vector<std::vector<float>> batch_images, std::vector<int>batch_labels) {
-    std::vector<std::vector<float>> out = c1_layer.forward(batch_images, imageHeight, imageWidth);
-    printShape(out, "c1_out");
-    out = a1.forwardProp(out);
-    printShape(out, "a1_out");
-    out = s2_layer.average_pooling(out);
-    printShape(out, "s2_out");
-    out = a2.forwardProp(out);
-    printShape(out, "a2_out");
-    out = c3_layer.forward(out, s2_layer.output_image_size, s2_layer.output_image_size);
-    printShape(out, "c3_out");
-    out = a3.forwardProp(out);
-    printShape(out, "a3_out");
-    out = s4_layer.average_pooling(out);
-    printShape(out, "s4_out");
-    out = a4.forwardProp(out);
-    printShape(out, "a4_out");
-    out = f5_layer.forward_prop(out);
-    printShape(out, "f5_out");
-    out = a5.forwardProp(out);
-    printShape(out, "a5_out");
-    out = f6_layer.forward_prop(out);
-    printShape(out, "f6_out");
-    out = a6.forwardProp(out);
-    printShape(out, "a6_out");
-    logits = o1.forwardProp(out);
-    printShape(logits, "logits");
-    labels = Output_Layer(logits,batch_images.size());
-    //std::cout<<"Label size: "<<labels.size();
+int LeNet5::Forward_Propagation(const std::vector<std::vector<float>>& batch_images,
+                              const std::vector<int>& batch_labels) {
+    const size_t batch_size = batch_images.size();
+
+    // Forward pass with minimal temporaries
+    auto out = c1_layer.forward(batch_images, IMAGE_HEIGHT, IMAGE_WIDTH);
+    out = a1.forwardProp(std::move(out));
+    out = s2_layer.average_pooling(std::move(out));
+    out = a2.forwardProp(std::move(out));
+    out = c3_layer.forward(std::move(out), s2_layer.output_image_size, s2_layer.output_image_size);
+    out = a3.forwardProp(std::move(out));
+    out = s4_layer.average_pooling(std::move(out));
+    out = a4.forwardProp(std::move(out));
+    out = f5_layer.forward_prop(std::move(out));
+    out = a5.forwardProp(std::move(out));
+    out = f6_layer.forward_prop(std::move(out));
+    out = a6.forwardProp(std::move(out));
+    logits = o1.forwardProp(std::move(out));
+
+    // Compute predictions and metrics
+    predicted_labels = std::vector<int>(batch_size);
     int correct = 0;
-    for(int i = 0; i< labels.size();i++){
-        if (labels[i] == batch_labels[i]) {
-            correct++;
+
+    #pragma omp parallel for reduction(+:correct)
+    for (size_t i = 0; i < batch_size; ++i) {
+        // Find max probability class
+        int max_idx = 0;
+        float max_val = logits[i][0];
+
+        #pragma omp simd reduction(max:max_val)
+        for (int j = 1; j < OUTPUT_NEURONS; ++j) {
+            if (logits[i][j] > max_val) {
+                max_idx = j;
+                max_val = logits[i][j];
+            }
         }
+
+        predicted_labels[i] = max_idx;
+        correct += (max_idx == batch_labels[i]);
     }
-    float total_loss = 0.0f;
-    for (size_t i = 0; i < batch_labels.size(); ++i) {
-        int correct_label = batch_labels[i];
-        float prob = logits[i][correct_label]; // Softmax probability for the correct class
-        total_loss += -std::log(prob); // Cross-entropy loss
-    }
-    total_loss /= batch_labels.size(); // Average loss for the batch
-    std::cout<<"Average Loss For this batch:  "<<total_loss<<" Correct This Batch: "<<correct<<std::endl;
+#ifdef DDEBUG
+    // Compute and print metrics
+    const float loss = computeLoss(batch_labels);
+    std::cout << "Batch Loss: " << loss << " Correct: " << correct << "/" << batch_size
+              << " (" << (100.0f * correct / batch_size) << "%)\n";
+#endif
 
     return correct;
 }
 
-// Back Propagation
-void LeNet5::Back_Propagation(std::vector<int>batch_labels) {
-    std::vector<std::vector<float>> dy_pred(batch_labels.size(), std::vector<float>(kernel_shape["OUTPUT"][0], 0));
-    for (size_t i = 0; i < batch_labels.size(); ++i) {
-        for (size_t j = 0; j < logits[i].size(); ++j) {
-            dy_pred[i][j] = logits[i][j]; // Copy softmax probabilities
+void LeNet5::Back_Propagation(const std::vector<int>& batch_labels) {
+    const size_t batch_size = batch_labels.size();
+
+    // Compute gradients for cross-entropy loss
+    std::vector<std::vector<float>> gradients(batch_size,
+        std::vector<float>(OUTPUT_NEURONS));
+
+    #pragma omp parallel for collapse(2)
+    for (size_t i = 0; i < batch_size; ++i) {
+        for (int j = 0; j < OUTPUT_NEURONS; ++j) {
+            gradients[i][j] = logits[i][j];
             if (j == batch_labels[i]) {
-                dy_pred[i][j] -= 1.0f; // Subtract 1 for the correct class
+                gradients[i][j] -= 1.0f;
             }
         }
     }
-    std::vector<std::vector<float>> back_out = o1.backProp(dy_pred);
-    printShape(back_out, "o1_back");
-    back_out = a6.backProp(back_out);
-    printShape(back_out, "a6_back");
-    back_out = f6_layer.back_prop(back_out);
-    printShape(back_out, "f6_back");
-    back_out = a5.backProp(back_out);
-    printShape(back_out, "a5_back");
-    back_out = f5_layer.back_prop(back_out);
-    printShape(back_out, "f5_back");
-    back_out = a4.backProp(back_out);
-    printShape(back_out, "a4_back");
-    back_out = s4_layer.backward(back_out);
-    printShape(back_out, "s4_back");
-    back_out = a3.backProp(back_out);
-    printShape(back_out, "a3_back");
-    back_out = c3_layer.backward(back_out);
-    printShape(back_out, "c3_back");
-    back_out = a2.backProp(back_out);
-    printShape(back_out, "a2_back");
-    back_out = s2_layer.backward(back_out);
-    printShape(back_out, "s2_back");
-    back_out = a1.backProp(back_out);
-    printShape(back_out, "a1_back");
-    back_out = c1_layer.backward(back_out);
-    printShape(back_out, "c1_back");
 
+    // Backward pass with minimal temporaries
+    auto grad = o1.backProp(std::move(gradients));
+    grad = a6.backProp(std::move(grad));
+    grad = f6_layer.back_prop(std::move(grad));
+    grad = a5.backProp(std::move(grad));
+    grad = f5_layer.back_prop(std::move(grad));
+    grad = a4.backProp(std::move(grad));
+    grad = s4_layer.backward(std::move(grad));
+    grad = a3.backProp(std::move(grad));
+    grad = c3_layer.backward(std::move(grad));
+    grad = a2.backProp(std::move(grad));
+    grad = s2_layer.backward(std::move(grad));
+    grad = a1.backProp(std::move(grad));
+    grad = c1_layer.backward(std::move(grad));
 }
 
-std::vector<int> LeNet5::Output_Layer(std::vector<std::vector<float>> X,int outsize){
-    int inp = kernel_shape["OUTPUT"][0];
-    std::vector<int> Y(outsize,0);
-    for (int i = 0; i < outsize; i++) {
-        int max_idx = 0;
-        float max_val = X[i][max_idx];
-        for (int j = 1; j < inp; j++) {
-            float elem = X[i][j];
-            if (elem > max_val) {
-                max_idx = j;
-                max_val = elem;
-            }
-        }
-        Y[i] = max_idx;
-    }
-    return Y;
-}
+float LeNet5::computeLoss(const std::vector<int>& batch_labels) const {
+    float total_loss = 0.0f;
+    const size_t batch_size = batch_labels.size();
 
-
-// Initialize weights
-std::pair<std::vector<std::vector<float>>, std::vector<float>> LeNet5::initialize_weights(std::vector<int> kernel_shape) {
-    std::vector<std::vector<float>> weight;
-    std::vector<float> bias;
-    std::random_device rd;
-    std::mt19937 gen(rd());
-    std::normal_distribution<float> d(0.0, 0.1); // Mean = 0.0, Std Dev = 0.1
-
-    // Initialize weight matrix (rows = kernel_shape[0], cols = kernel_shape[1])
-    int rows = kernel_shape[0];
-    int cols = kernel_shape[1];
-    weight.resize(rows, std::vector<float>(cols, 0.0f)); // Initialize with zeros
-    for (int i = 0; i < rows; ++i) {
-        for (int j = 0; j < cols; ++j) {
-            weight[i][j] = d(gen); // Assign random values from Gaussian distribution
-        }
+    #pragma omp parallel for reduction(+:total_loss)
+    for (size_t i = 0; i < batch_size; ++i) {
+        total_loss += -std::log(logits[i][batch_labels[i]]);
     }
 
-    // Initialize bias vector (size = kernel_shape[1])
-    bias.resize(cols, 0.01f); // Small constant value for bias initialization
-
-    return {weight, bias};
-}
-
-void LeNet5::printShape(const std::vector<std::vector<float>>& tensor, const std::string& name) {
-    return;
-    if (tensor.empty()) {
-         std::cout << name << " shape: [0]" << std::endl;
-         return;
-     }
-    size_t rows = tensor.size();
-    size_t cols = tensor[0].size();
-    std::cout << name << " shape: [" << rows << " x " << cols << "]" << std::endl;
+    return total_loss / batch_size;
 }

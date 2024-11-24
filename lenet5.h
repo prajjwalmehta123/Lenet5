@@ -13,45 +13,40 @@
 
 class LeNet5 {
 private:
-    FCLayer f5_layer,f6_layer; // Fully connected layer
-    ConvolutionLayer c1_layer,c3_layer;
-    subsampling s2_layer,s4_layer;
-    Activation a1, a2, a3, a4, a5,a6;
+    // Layer objects
+    ConvolutionLayer c1_layer, c3_layer;
+    subsampling s2_layer, s4_layer;
+    FCLayer f5_layer, f6_layer;
+    Activation a1, a2, a3, a4, a5, a6;
     OutputLayer o1;
 
-    // Kernel shapes for various layers
-    std::map<std::string, std::vector<int>> kernel_shape = {
-        {"C1", {5, 5, 1, 6}},
-        {"C3", {5, 5, 6, 16}},
-        {"F5", {120, 400}},
-        {"F6", {84, 120}},
-        {"OUTPUT", {10, 84}}
-    };
-    int imageHeight = 32;
-    int imageWidth = 32;
+    // Cache intermediate outputs for debugging/visualization if needed
+    struct LayerCache {
+        std::vector<std::vector<float>> conv1_out, conv3_out;
+        std::vector<std::vector<float>> pool2_out, pool4_out;
+        std::vector<std::vector<float>> fc5_out, fc6_out;
+    } cache;
 
-    // Hyperparameters
-    std::map<std::string, int> hparameters_convlayer = {{"stride", 1}, {"pad", 0}};
-    std::map<std::string, int> hparameters_pooling = {{"stride", 2}, {"f", 2}};
+    // Network configuration
+    static constexpr int IMAGE_HEIGHT = 32;
+    static constexpr int IMAGE_WIDTH = 32;
+    static constexpr int CONV1_CHANNELS = 6;
+    static constexpr int CONV3_CHANNELS = 16;
+    static constexpr int FC5_NEURONS = 120;
+    static constexpr int FC6_NEURONS = 84;
+    static constexpr int OUTPUT_NEURONS = 10;
 
-    // Label for caching during forward propagation
-    std::vector<int> labels;
+    // Store output and labels
     std::vector<std::vector<float>> logits;
+    std::vector<int> predicted_labels;
+
+    float computeLoss(const std::vector<int>& batch_labels) const;
+    void computeAccuracy(const std::vector<int>& batch_labels, int& correct_count) const;
 
 public:
-    // Constructor
     LeNet5();
-
-    // Forward propagation
-    int Forward_Propagation(std::vector<std::vector<float>> batch_images, std::vector<int>batch_labels);
-
-    // Back propagation
-    void Back_Propagation(std::vector<int>batch_labels);
-
-    // Initialize weights
-    std::pair<std::vector<std::vector<float>>, std::vector<float>> initialize_weights(std::vector<int> kernel_shape);
-    std::vector<int> Output_Layer(std::vector<std::vector<float>> X, int outsize);
-    void printShape(const std::vector<std::vector<float>>& tensor, const std::string& name);
+    int Forward_Propagation(const std::vector<std::vector<float>>& batch_images,
+                          const std::vector<int>& batch_labels);
+    void Back_Propagation(const std::vector<int>& batch_labels);
 };
-
 #endif // LENET5_H

@@ -128,7 +128,6 @@ pair<vector<vector<float>>, vector<int>> dataloader::get_batch() {
 
     batch_images.reserve(batch_size);
     batch_labels.reserve(batch_size);
-
     for (int i = start_index; i < end_index; ++i) {
         //batch_images.insert(batch_images.end(), images[i].begin(), images[i].end());
         batch_images.push_back(images[i]);
