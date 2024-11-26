@@ -1,3 +1,4 @@
+Git Link --> https://github.com/prajjwalmehta123/Lenet5
 # LeNet-5 Implementation in C++
 
 This repository contains a modern C++ implementation of the LeNet-5 convolutional neural network architecture, designed for MNIST digit classification. The implementation features both CPU (OpenMP) and GPU (CUDA) acceleration options.
