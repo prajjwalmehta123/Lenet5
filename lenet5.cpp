@@ -14,11 +14,27 @@ LeNet5::LeNet5(){
         std::cout << std::endl;
     }
     */
-    c1_layer = ConvolutionLayer(kernel_shape["C1"][2], kernel_shape["C1"][3], kernel_shape["C1"][0], hparameters_convlayer["stride"], hparameters_convlayer["padding"]);
+    c1_layer = ConvolutionLayer(
+        kernel_shape["C1"][2], 
+        kernel_shape["C1"][3], 
+        kernel_shape["C1"][0], 
+        hparameters_convlayer["stride"], 
+        hparameters_convlayer["padding"]
+    );
+    
+    // Initialize other layers using member initializer list
+    c3_layer = ConvolutionLayer(
+        kernel_shape["C3"][2], 
+        kernel_shape["C3"][3], 
+        kernel_shape["C3"][0], 
+        hparameters_convlayer["stride"], 
+        hparameters_convlayer["padding"]
+    );
+    //c1_layer = ConvolutionLayer(kernel_shape["C1"][2], kernel_shape["C1"][3], kernel_shape["C1"][0], hparameters_convlayer["stride"], hparameters_convlayer["padding"]);
     a1 = Activation();
     s2_layer = subsampling(2,2,28,6);
     a2 = Activation();
-    c3_layer = ConvolutionLayer(kernel_shape["C3"][2], kernel_shape["C3"][3], kernel_shape["C3"][0], hparameters_convlayer["stride"], hparameters_convlayer["padding"]);
+    //c3_layer = ConvolutionLayer(kernel_shape["C3"][2], kernel_shape["C3"][3], kernel_shape["C3"][0], hparameters_convlayer["stride"], hparameters_convlayer["padding"]);
     a3 = Activation();
     s4_layer = subsampling(2,2,10,16);
     a4 = Activation();

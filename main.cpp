@@ -28,7 +28,7 @@ int main()
                 std::cerr << "Error: Environment variable " << mnist_label_var << " is not set!" << std::endl;
                 return 1;
         }
-        dataloader dataloader(mnist_image_path,mnist_label_path,128, false);
+        dataloader dataloader(mnist_image_path,mnist_label_path,256, false);
         LeNet5 lenet;
         int correct = 0;
         auto start = std::chrono::high_resolution_clock::now();

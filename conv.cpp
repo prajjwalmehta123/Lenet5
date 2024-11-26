@@ -4,12 +4,61 @@
 
 ConvolutionLayer::ConvolutionLayer(){}
 
+ConvolutionLayer::ConvolutionLayer(ConvolutionLayer&& other) noexcept
+    : inputChannels(other.inputChannels)
+    , outputChannels(other.outputChannels)
+    , kernelSize(other.kernelSize)
+    , stride(other.stride)
+    , padding(other.padding)
+#ifdef USE_CUDA
+    , gpuImplementation(std::move(other.gpuImplementation))
+#else
+    , weights(std::move(other.weights))
+    , biases(std::move(other.biases))
+    , gradWeights(std::move(other.gradWeights))
+    , gradBiases(std::move(other.gradBiases))
+    , inputDataBatch(std::move(other.inputDataBatch))
+    , outputDataBatch(std::move(other.outputDataBatch))
+    , weightOptimizers(std::move(other.weightOptimizers))
+    , biasOptimizer(std::move(other.biasOptimizer))
+#endif
+{
+}
+
+ConvolutionLayer& ConvolutionLayer::operator=(ConvolutionLayer&& other) noexcept {
+    if (this != &other) {
+        inputChannels = other.inputChannels;
+        outputChannels = other.outputChannels;
+        kernelSize = other.kernelSize;
+        stride = other.stride;
+        padding = other.padding;
+#ifdef USE_CUDA
+        gpuImplementation = std::move(other.gpuImplementation);
+#else
+        weights = std::move(other.weights);
+        biases = std::move(other.biases);
+        gradWeights = std::move(other.gradWeights);
+        gradBiases = std::move(other.gradBiases);
+        inputDataBatch = std::move(other.inputDataBatch);
+        outputDataBatch = std::move(other.outputDataBatch);
+        weightOptimizers = std::move(other.weightOptimizers);
+        biasOptimizer = std::move(other.biasOptimizer);
+#endif
+    }
+    return *this;
+}
+
 ConvolutionLayer::ConvolutionLayer(int inputChannels, int outputChannels, int kernelSize, int stride, int padding)
     : inputChannels(inputChannels), outputChannels(outputChannels), kernelSize(kernelSize), stride(stride), padding(padding) {
+    #ifdef USE_CUDA
+    gpuImplementation = std::make_unique<ConvGPU>(inputChannels, outputChannels, kernelSize, stride, padding);
+    #else
     weightOptimizers.resize(outputChannels, std::vector<AdamOptimizer>(inputChannels, AdamOptimizer(0.01,0.9,0.999,1e-8)));
     biasOptimizer = AdamOptimizer(0.01,0.9,0.999,1e-8);
     initializeWeights();
+    #endif
 }
+ConvolutionLayer::~ConvolutionLayer() = default;
 
 void ConvolutionLayer::initializeWeights() {
     std::default_random_engine generator;
@@ -34,9 +83,13 @@ void ConvolutionLayer::initializeWeights() {
 }
 
 std::vector<std::vector<float>> ConvolutionLayer::forward(const std::vector<std::vector<float>>& inputBatch, int imageHeight, int imageWidth) {
-    inputDataBatch = inputBatch; // Save input for backward pass
+    #ifdef USE_CUDA
+    return gpuImplementation->forward(inputBatch, imageHeight, imageWidth);
+#else
+    inputDataBatch = inputBatch;
     outputDataBatch = conv2DCPU(inputBatch, imageHeight, imageWidth);
     return outputDataBatch;
+#endif
 }
 
 // CPU convolution for a batch with flattened images
@@ -95,6 +148,9 @@ int ConvolutionLayer::calculateOutputSize(int inputSize, int kernelSize, int str
     return ((inputSize - kernelSize + 2 * padding) / stride) + 1;
 }
 std::vector<std::vector<float>> ConvolutionLayer::backward(const std::vector<std::vector<float>>& gradOutputBatch) {
+    #ifdef USE_CUDA
+    return gpuImplementation->backward(gradOutputBatch);
+    #else
     size_t batchSize = gradOutputBatch.size();
 
     int inputSizePerImage = inputDataBatch[0].size(); // Total elements per image
@@ -200,11 +256,15 @@ std::vector<std::vector<float>> ConvolutionLayer::backward(const std::vector<std
 
     updateWeights();
     return gradInputBatch;
+    #endif
 }
 
 
 
 void ConvolutionLayer::updateWeights() {
+    #ifdef USE_CUDA
+    gpuImplementation->updateWeights();
+    #else
     // Update weights using AdamOptimizers
     for (int oc = 0; oc < outputChannels; ++oc) {
         for (int ic = 0; ic < inputChannels; ++ic) {
@@ -212,6 +272,7 @@ void ConvolutionLayer::updateWeights() {
         }
     }
     biasOptimizer.update_bias(biases, gradBiases);
+    #endif
 }
 
 
