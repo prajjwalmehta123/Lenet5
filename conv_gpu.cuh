@@ -13,6 +13,9 @@ public:
     std::vector<std::vector<float>> forward(const std::vector<std::vector<float>>& inputBatch, 
                                           int imageHeight, int imageWidth);
     std::vector<std::vector<float>> backward(const std::vector<std::vector<float>>& gradOutputBatch);
+    std::vector<std::vector<std::vector<std::vector<float>>>> getWeights() const;
+    void copyWeightsToHost(std::vector<float>& flat_weights, std::vector<float>& biases) const;
+    std::vector<float> getBiases() const;
     void updateWeights();
 
 private:

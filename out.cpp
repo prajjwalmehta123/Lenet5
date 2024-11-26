@@ -190,3 +190,18 @@ std::vector<float> OutputLayer::softmax(const std::vector<float>& z) {
     }
     return expZ;
 }
+std::vector<std::vector<float>> OutputLayer::getWeights() const {
+#ifdef USE_CUDA
+    return gpuImplementation->getWeights();
+#else
+    return weights;
+#endif
+}
+
+std::vector<float> OutputLayer::getBiases() const {
+#ifdef USE_CUDA
+    return gpuImplementation->getBiases();
+#else
+    return biases;
+#endif
+}

@@ -21,8 +21,9 @@ set(SOURCES
     out.cpp
     activation.cpp
     adam.cpp
+    model.cpp
 )
-
+    
 # GPU-specific settings
 if(USE_CUDA)
     enable_language(CUDA)
@@ -54,24 +55,24 @@ endif()
 add_executable(lenet5 ${SOURCES})
 
 # Apply GPU-specific compile options and flags
-if(USE_CUDA)
+    if(USE_CUDA)
     #target_compile_features(lenet5 PUBLIC cuda_std_17)
     target_compile_definitions(lenet5 PUBLIC USE_CUDA)
     #target_link_libraries(lenet5 PUBLIC cuda cudart)
 
-    
+
     set_target_properties(lenet5 PROPERTIES 
         CUDA_SEPARABLE_COMPILATION ON)
-endif()
+    endif()
 
 # Link OpenMP libraries
-if(OpenMP_CXX_FOUND)
-    target_link_libraries(lenet5 PUBLIC OpenMP::OpenMP_CXX)
-    target_compile_definitions(lenet5 PUBLIC ENABLE_OPENMP)
-endif()
+    if(OpenMP_CXX_FOUND)
+        target_link_libraries(lenet5 PUBLIC OpenMP::OpenMP_CXX)
+        target_compile_definitions(lenet5 PUBLIC ENABLE_OPENMP)
+    endif()
 
 # Optimize build flags for performance
-target_compile_options(lenet5 PUBLIC $<$<COMPILE_LANGUAGE:CXX>:-O3 -march=native>)
+    target_compile_options(lenet5 PUBLIC $<$<COMPILE_LANGUAGE:CXX>:-O3 -march=native>)
 
 # Print configuration
 if(USE_CUDA)

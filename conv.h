@@ -29,6 +29,8 @@ public:
     // Delete copy constructor and copy assignment operator
     ConvolutionLayer(const ConvolutionLayer&) = delete;
     ConvolutionLayer& operator=(const ConvolutionLayer&) = delete;
+    std::vector<std::vector<std::vector<std::vector<float>>>> getWeights() const;
+    std::vector<float> getBiases() const;
 
 private:
     int inputChannels;

@@ -216,3 +216,19 @@ std::pair<std::vector<std::vector<float>>, std::vector<float>> FCLayer::initiali
     }
     return {w, b};
 }
+
+std::vector<std::vector<float>> FCLayer::getWeights() const {
+#ifdef USE_CUDA
+    return gpuImplementation->getWeights();
+#else
+    return weight;
+#endif
+}
+
+std::vector<float> FCLayer::getBiases() const {
+#ifdef USE_CUDA
+    return gpuImplementation->getBiases();
+#else
+    return bias;
+#endif
+}

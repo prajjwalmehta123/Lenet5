@@ -303,3 +303,32 @@ std::vector<std::vector<float>> OutputLayerGPU::backward(
     
     return dInput;
 }
+std::vector<std::vector<float>> OutputLayerGPU::getWeights() const {
+    std::vector<float> flat_weights(outputSize * inputSize);
+    std::vector<float> biases(outputSize);
+    copyWeightsToHost(flat_weights, biases);
+
+    std::vector<std::vector<float>> weights(outputSize, std::vector<float>(inputSize));
+    for(int i = 0; i < outputSize; ++i) {
+        for(int j = 0; j < inputSize; ++j) {
+            weights[i][j] = flat_weights[i * inputSize + j];
+        }
+    }
+    return weights;
+}
+
+std::vector<float> OutputLayerGPU::getBiases() const {
+    std::vector<float> biases(outputSize);
+    std::vector<float> flat_weights(outputSize * inputSize);
+    copyWeightsToHost(flat_weights, biases);
+    return biases;
+}
+
+void OutputLayerGPU::copyWeightsToHost(std::vector<float>& weights, std::vector<float>& biases) const {
+    CUDA_CHECK(cudaMemcpy(weights.data(), d_weights, 
+                         weights.size() * sizeof(float), 
+                         cudaMemcpyDeviceToHost));
+    CUDA_CHECK(cudaMemcpy(biases.data(), d_biases, 
+                         biases.size() * sizeof(float), 
+                         cudaMemcpyDeviceToHost));
+}

@@ -63,6 +63,158 @@ int LeNet5::compute_accuracy(std::vector<int>batch_labels) {
     return correct;
 }
 
+void LeNet5::saveModel(const std::string& filepath) const {
+    std::ofstream file(filepath, std::ios::binary);
+    if (!file.is_open()) {
+        throw std::runtime_error("Could not open file for writing: " + filepath);
+    }
+
+    // Save conv layers
+    writeConvLayer<4>(file, c1_layer.getWeights(), c1_layer.getBiases());
+    writeConvLayer<4>(file, c3_layer.getWeights(), c3_layer.getBiases());
+
+    // Save fully connected layers
+    writeLayer(file, f5_layer.getWeights(), f5_layer.getBiases());
+    writeLayer(file, f6_layer.getWeights(), f6_layer.getBiases());
+    writeLayer(file, o1.getWeights(), o1.getBiases());
+
+    file.close();
+}
+
+void LeNet5::loadModel(const std::string& filepath) {
+    std::ifstream file(filepath, std::ios::binary);
+    if (!file.is_open()) {
+        throw std::runtime_error("Could not open file for reading: " + filepath);
+    }
+
+    // Load conv layers
+    auto c1_weights = c1_layer.getWeights();
+    auto c1_biases = c1_layer.getBiases();
+    readConvLayer<4>(file, c1_weights, c1_biases);
+
+    auto c3_weights = c3_layer.getWeights();
+    auto c3_biases = c3_layer.getBiases();
+    readConvLayer<4>(file, c3_weights, c3_biases);
+
+    // Load fully connected layers
+    auto f5_weights = f5_layer.getWeights();
+    auto f5_biases = f5_layer.getBiases();
+    readLayer(file, f5_weights, f5_biases);
+
+    auto f6_weights = f6_layer.getWeights();
+    auto f6_biases = f6_layer.getBiases();
+    readLayer(file, f6_weights, f6_biases);
+
+    auto o1_weights = o1.getWeights();
+    auto o1_biases = o1.getBiases();
+    readLayer(file, o1_weights, o1_biases);
+
+    file.close();
+}
+
+void LeNet5::writeLayer(std::ofstream& file, const std::vector<std::vector<float>>& weights,
+                       const std::vector<float>& biases) const {
+    // Write dimensions
+    size_t rows = weights.size();
+    size_t cols = weights[0].size();
+    file.write(reinterpret_cast<const char*>(&rows), sizeof(rows));
+    file.write(reinterpret_cast<const char*>(&cols), sizeof(cols));
+
+    // Write weights
+    for (const auto& row : weights) {
+        file.write(reinterpret_cast<const char*>(row.data()), cols * sizeof(float));
+    }
+
+    // Write biases
+    size_t biasSize = biases.size();
+    file.write(reinterpret_cast<const char*>(&biasSize), sizeof(biasSize));
+    file.write(reinterpret_cast<const char*>(biases.data()), biasSize * sizeof(float));
+}
+
+void LeNet5::readLayer(std::ifstream& file, std::vector<std::vector<float>>& weights,
+                      std::vector<float>& biases) {
+    // Read dimensions
+    size_t rows, cols;
+    file.read(reinterpret_cast<char*>(&rows), sizeof(rows));
+    file.read(reinterpret_cast<char*>(&cols), sizeof(cols));
+
+    // Read weights
+    weights.resize(rows, std::vector<float>(cols));
+    for (auto& row : weights) {
+        file.read(reinterpret_cast<char*>(row.data()), cols * sizeof(float));
+    }
+
+    // Read biases
+    size_t biasSize;
+    file.read(reinterpret_cast<char*>(&biasSize), sizeof(biasSize));
+    biases.resize(biasSize);
+    file.read(reinterpret_cast<char*>(biases.data()), biasSize * sizeof(float));
+}
+
+template<size_t N>
+void LeNet5::writeConvLayer(std::ofstream& file,
+                           const std::vector<std::vector<std::vector<std::vector<float>>>>& weights,
+                           const std::vector<float>& biases) const {
+    // Write dimensions
+    std::array<size_t, N> dims;
+    dims[0] = weights.size();
+    dims[1] = weights[0].size();
+    dims[2] = weights[0][0].size();
+    dims[3] = weights[0][0][0].size();
+    
+    file.write(reinterpret_cast<const char*>(dims.data()), N * sizeof(size_t));
+
+    // Write weights
+    for (const auto& d1 : weights) {
+        for (const auto& d2 : d1) {
+            for (const auto& d3 : d2) {
+                file.write(reinterpret_cast<const char*>(d3.data()), d3.size() * sizeof(float));
+            }
+        }
+    }
+
+    // Write biases
+    size_t biasSize = biases.size();
+    file.write(reinterpret_cast<const char*>(&biasSize), sizeof(biasSize));
+    file.write(reinterpret_cast<const char*>(biases.data()), biasSize * sizeof(float));
+}
+
+template<size_t N>
+void LeNet5::readConvLayer(std::ifstream& file,
+                          std::vector<std::vector<std::vector<std::vector<float>>>>& weights,
+                          std::vector<float>& biases) {
+    // Read dimensions
+    std::array<size_t, N> dims;
+    file.read(reinterpret_cast<char*>(dims.data()), N * sizeof(size_t));
+
+    // Resize weights
+    weights.resize(dims[0]);
+    for (auto& d1 : weights) {
+        d1.resize(dims[1]);
+        for (auto& d2 : d1) {
+            d2.resize(dims[2]);
+            for (auto& d3 : d2) {
+                d3.resize(dims[3]);
+            }
+        }
+    }
+
+    // Read weights
+    for (auto& d1 : weights) {
+        for (auto& d2 : d1) {
+            for (auto& d3 : d2) {
+                file.read(reinterpret_cast<char*>(d3.data()), d3.size() * sizeof(float));
+            }
+        }
+    }
+
+    // Read biases
+    size_t biasSize;
+    file.read(reinterpret_cast<char*>(&biasSize), sizeof(biasSize));
+    biases.resize(biasSize);
+    file.read(reinterpret_cast<char*>(biases.data()), biasSize * sizeof(float));
+}
+
 // Back Propagation
 void LeNet5::Back_Propagation(std::vector<int> batch_labels) {
     using namespace std::chrono;

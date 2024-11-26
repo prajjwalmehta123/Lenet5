@@ -274,5 +274,18 @@ void ConvolutionLayer::updateWeights() {
     biasOptimizer.update_bias(biases, gradBiases);
     #endif
 }
+std::vector<std::vector<std::vector<std::vector<float>>>> ConvolutionLayer::getWeights() const {
+#ifdef USE_CUDA
+    return gpuImplementation->getWeights();
+#else
+    return weights;
+#endif
+}
 
-
+std::vector<float> ConvolutionLayer::getBiases() const {
+#ifdef USE_CUDA
+    return gpuImplementation->getBiases();
+#else
+    return biases;
+#endif
+}
