@@ -13,6 +13,8 @@ public:
 
     std::vector<std::vector<float>> forward(const std::vector<std::vector<float>>& input);
     std::vector<std::vector<float>> backward(const std::vector<std::vector<float>>& dLoss);
+    std::vector<std::vector<float>> getWeights() const;
+    std::vector<float> getBiases() const;
 
 private:
     // Layer dimensions
@@ -50,6 +52,7 @@ private:
     // Helper functions
     void allocateMemory(int batch_size);
     void freeMemoryIfAllocated();
+    void copyWeightsToHost(std::vector<float>& weights, std::vector<float>& biases) const;
 };
 
 #endif // OUTPUT_GPU_CUH

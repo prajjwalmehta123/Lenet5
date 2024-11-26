@@ -12,6 +12,8 @@ public:
 
     std::vector<std::vector<float>> forward(const std::vector<std::vector<float>>& input);
     std::vector<std::vector<float>> backward(const std::vector<std::vector<float>>& dZ);
+    std::vector<std::vector<float>> getWeights() const;
+    std::vector<float> getBiases() const;
 
 private:
     // Device pointers
@@ -34,6 +36,7 @@ private:
     // Host copies of weights and biases
     std::vector<std::vector<float>> h_weights;
     std::vector<float> h_bias;
+    void copyWeightsToHost(std::vector<float>& weights, std::vector<float>& biases) const;
     
     // Dimensions
     int input_size;

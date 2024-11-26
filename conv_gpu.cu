@@ -380,3 +380,48 @@ void ConvGPU::updateWeights() {
     CUDA_CHECK(cudaGetLastError());
     CUDA_CHECK(cudaDeviceSynchronize());
 }
+std::vector<std::vector<std::vector<std::vector<float>>>> ConvGPU::getWeights() const {
+    std::vector<float> flat_weights(outputChannels * inputChannels * kernelSize * kernelSize);
+    std::vector<float> biases(outputChannels);
+    copyWeightsToHost(flat_weights, biases);
+
+    // Reshape flat weights to 4D vector
+    std::vector<std::vector<std::vector<std::vector<float>>>> weights(
+        outputChannels,
+        std::vector<std::vector<std::vector<float>>>(
+            inputChannels,
+            std::vector<std::vector<float>>(
+                kernelSize,
+                std::vector<float>(kernelSize)
+            )
+        )
+    );
+
+    int idx = 0;
+    for(int oc = 0; oc < outputChannels; ++oc) {
+        for(int ic = 0; ic < inputChannels; ++ic) {
+            for(int kh = 0; kh < kernelSize; ++kh) {
+                for(int kw = 0; kw < kernelSize; ++kw) {
+                    weights[oc][ic][kh][kw] = flat_weights[idx++];
+                }
+            }
+        }
+    }
+    return weights;
+}
+
+std::vector<float> ConvGPU::getBiases() const {
+    std::vector<float> biases(outputChannels);
+    std::vector<float> flat_weights(outputChannels * inputChannels * kernelSize * kernelSize);
+    copyWeightsToHost(flat_weights, biases);
+    return biases;
+}
+
+void ConvGPU::copyWeightsToHost(std::vector<float>& flat_weights, std::vector<float>& biases) const {
+    CUDA_CHECK(cudaMemcpy(flat_weights.data(), d_weights, 
+                         flat_weights.size() * sizeof(float), 
+                         cudaMemcpyDeviceToHost));
+    CUDA_CHECK(cudaMemcpy(biases.data(), d_biases, 
+                         biases.size() * sizeof(float), 
+                         cudaMemcpyDeviceToHost));
+}

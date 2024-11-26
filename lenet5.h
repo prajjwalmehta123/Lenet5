@@ -37,6 +37,20 @@ private:
     // Label for caching during forward propagation
     std::vector<int> labels;
     std::vector<std::vector<float>> logits;
+    void writeLayer(std::ofstream& file, const std::vector<std::vector<float>>& weights, 
+                   const std::vector<float>& biases) const;
+    void readLayer(std::ifstream& file, std::vector<std::vector<float>>& weights, 
+                  std::vector<float>& biases);
+    
+    template<size_t N>
+    void writeConvLayer(std::ofstream& file, 
+                       const std::vector<std::vector<std::vector<std::vector<float>>>>& weights,
+                       const std::vector<float>& biases) const;
+    
+    template<size_t N>
+    void readConvLayer(std::ifstream& file,
+                      std::vector<std::vector<std::vector<std::vector<float>>>>& weights,
+                      std::vector<float>& biases);
 
 public:
     // Constructor
@@ -53,6 +67,8 @@ public:
     std::vector<int> Output_Layer(std::vector<std::vector<float>> X, int outsize);
     float compute_loss(std::vector<int>batch_labels);
     int compute_accuracy(std::vector<int>batch_labels);
+    void saveModel(const std::string& filepath) const;
+    void loadModel(const std::string& filepath);
 };
 
 #endif // LENET5_H

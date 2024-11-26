@@ -34,6 +34,8 @@ private:
 public:
     FCLayer();
     FCLayer(const std::pair<int, int>& weight_shape, const std::string& init_mode = "Gaussian_dist");
+    std::vector<std::vector<float>> getWeights() const;
+    std::vector<float> getBiases() const;
     
     // Move constructor and assignment operator for proper unique_ptr handling
     FCLayer(FCLayer&& other) noexcept;

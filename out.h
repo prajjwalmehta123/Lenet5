@@ -30,6 +30,8 @@ public:
     // Delete copy operations
     OutputLayer(const OutputLayer&) = delete;
     OutputLayer& operator=(const OutputLayer&) = delete;
+    std::vector<std::vector<float>> getWeights() const;
+    std::vector<float> getBiases() const;
 
 
 

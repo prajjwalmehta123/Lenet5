@@ -296,3 +296,32 @@ std::vector<std::vector<float>> FCLayerGPU::backward(
     
     return dA_prev;
 }
+std::vector<std::vector<float>> FCLayerGPU::getWeights() const {
+    std::vector<float> flat_weights(output_size * input_size);
+    std::vector<float> biases(output_size);
+    copyWeightsToHost(flat_weights, biases);
+
+    std::vector<std::vector<float>> weights(output_size, std::vector<float>(input_size));
+    for(int i = 0; i < output_size; ++i) {
+        for(int j = 0; j < input_size; ++j) {
+            weights[i][j] = flat_weights[i * input_size + j];
+        }
+    }
+    return weights;
+}
+
+std::vector<float> FCLayerGPU::getBiases() const {
+    std::vector<float> biases(output_size);
+    std::vector<float> flat_weights(output_size * input_size);
+    copyWeightsToHost(flat_weights, biases);
+    return biases;
+}
+
+void FCLayerGPU::copyWeightsToHost(std::vector<float>& weights, std::vector<float>& biases) const {
+    CUDA_CHECK(cudaMemcpy(weights.data(), d_weights, 
+                         weights.size() * sizeof(float), 
+                         cudaMemcpyDeviceToHost));
+    CUDA_CHECK(cudaMemcpy(biases.data(), d_bias, 
+                         biases.size() * sizeof(float), 
+                         cudaMemcpyDeviceToHost));
+}
