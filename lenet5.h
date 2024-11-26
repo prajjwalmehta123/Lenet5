@@ -43,7 +43,7 @@ public:
     LeNet5();
 
     // Forward propagation
-    int Forward_Propagation(std::vector<std::vector<float>> batch_images, std::vector<int>batch_labels);
+    void Forward_Propagation(std::vector<std::vector<float>> batch_images, std::vector<int>batch_labels);
 
     // Back propagation
     void Back_Propagation(std::vector<int>batch_labels);
@@ -51,7 +51,8 @@ public:
     // Initialize weights
     std::pair<std::vector<std::vector<float>>, std::vector<float>> initialize_weights(std::vector<int> kernel_shape);
     std::vector<int> Output_Layer(std::vector<std::vector<float>> X, int outsize);
-    void printShape(const std::vector<std::vector<float>>& tensor, const std::string& name);
+    float compute_loss(std::vector<int>batch_labels);
+    int compute_accuracy(std::vector<int>batch_labels);
 };
 
 #endif // LENET5_H

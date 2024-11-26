@@ -1,3 +1,4 @@
+// FCLayer.h
 #ifndef FCLAYER_H
 #define FCLAYER_H
 
@@ -8,38 +9,42 @@
 #include <tuple>
 #include "adam.h"
 
+
+#ifdef USE_CUDA
+#include "fc_gpu.cuh"
+#include <memory>
+#endif
+
 class FCLayer {
 private:
-    std::vector<std::vector<float>> weight; // Weight matrix
-    std::vector<float> bias;               // Bias vector
+#ifdef USE_CUDA
+    std::unique_ptr<FCLayerGPU> gpuImplementation;
+#endif
+    std::vector<std::vector<float>> weight;
+    std::vector<float> bias;
     AdamOptimizer adam;
-    // std::vector<std::vector<float>> v_w;   // Velocity for weights (momentum)
-    // std::vector<float> v_b;                // Velocity for biases (momentum)
-    std::vector<std::vector<float>> input_array; // Cached input for backpropagation
-    float lr;                              // Learning rate
-
+    std::vector<std::vector<float>> input_array;
+    std::vector<std::vector<float>> dW;
+    std::vector<float> db;
+    std::vector<std::vector<float>> dA_prev;
     // Helper function to initialize weights and biases
     std::pair<std::vector<std::vector<float>>, std::vector<float>> initialize(
         int rows, int cols);
-    std::vector<std::vector<float>> dW; // Gradient w.r.t weights
-    std::vector<float> db;
-    std::vector<std::vector<float>> dA_prev;
-    std::vector<std::vector<float>> transpose(const std::vector<std::vector<float>>& matrix);
 
 public:
     FCLayer();
-    // Constructor: Initialize layer with weight dimensions and initialization mode
     FCLayer(const std::pair<int, int>& weight_shape, const std::string& init_mode = "Gaussian_dist");
+    
+    // Move constructor and assignment operator for proper unique_ptr handling
+    FCLayer(FCLayer&& other) noexcept;
+    FCLayer& operator=(FCLayer&& other) noexcept;
+    
+    // Delete copy constructor and assignment
+    FCLayer(const FCLayer&) = delete;
+    FCLayer& operator=(const FCLayer&) = delete;
 
-    // Forward Propagation: Compute output for given input
     std::vector<std::vector<float>> forward_prop(const std::vector<std::vector<float>>& input_array);
-
-    // Backward Propagation: Compute gradients and update weights
     std::vector<std::vector<float>> back_prop(const std::vector<std::vector<float>>& dZ);
-
-
-    // Stochastic Diagonal Levenberg-Marquardt (SDLM): Compute Hessian approximation
-    // std::vector<std::vector<float>> SDLM(const std::vector<std::vector<float>>& d2Z, float mu, float lr_global);
 };
 
 #endif // FCLAYER_H

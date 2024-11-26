@@ -3,8 +3,12 @@
 
 #include <vector>
 #include <string>
-#include <unordered_map>
-#include <functional>
+#include <memory>
+
+#ifdef USE_CUDA
+#include "activation_gpu.cuh"
+#endif
+
 
 
 class Activation {
@@ -22,6 +26,10 @@ private:
     std::vector<std::vector<float>> inputImage;
     inline float relu(float x) { return x > 0 ? x : 0; }
     inline float d_relu(float x) { return x > 0 ? 1 : 0; }
+
+    #ifdef USE_CUDA
+    std::unique_ptr<ActivationGPU> gpuImplementation;
+    #endif
 
     // Initialize activation functions and their derivatives
     void initializeFunctions();

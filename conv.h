@@ -1,5 +1,4 @@
 // conv.h
-
 #ifndef CONV_H
 #define CONV_H
 
@@ -10,20 +9,26 @@
 #include "adam.h"
 #include <omp.h>
 
-
-class ConvGPU;
+#ifdef USE_CUDA
+#include "conv_gpu.cuh"
+#endif
 
 class ConvolutionLayer {
 public:
-    // Constructors
     ConvolutionLayer();
     ConvolutionLayer(int inputChannels, int outputChannels, int kernelSize, int stride = 1, int padding = 0);
-
-    // Forward and Backward Passes
+    ~ConvolutionLayer();
     std::vector<std::vector<float>> forward(const std::vector<std::vector<float>>& inputBatch, int imageHeight, int imageWidth);
     std::vector<std::vector<float>> backward(const std::vector<std::vector<float>>& gradOutputBatch);
     void updateWeights();
     static int calculateOutputSize(int inputSize, int kernelSize, int stride, int padding);
+    // Add move constructor and move assignment operator
+    ConvolutionLayer(ConvolutionLayer&& other) noexcept;
+    ConvolutionLayer& operator=(ConvolutionLayer&& other) noexcept;
+
+    // Delete copy constructor and copy assignment operator
+    ConvolutionLayer(const ConvolutionLayer&) = delete;
+    ConvolutionLayer& operator=(const ConvolutionLayer&) = delete;
 
 private:
     int inputChannels;
@@ -31,16 +36,20 @@ private:
     int kernelSize;
     int stride;
     int padding;
+    
+#ifdef USE_CUDA
+    std::unique_ptr<ConvGPU> gpuImplementation;
+#endif
     std::vector<std::vector<std::vector<std::vector<float>>>> weights; // [outChannels][inChannels][kernelSize][kernelSize]
     std::vector<float> biases; // [outChannels]
-    std::vector<std::vector<std::vector<std::vector<float>>>> gradWeights; // [outChannels][inChannels][kernelSize][kernelSize]
-    std::vector<float> gradBiases; // [outChannels]
-    std::vector<std::vector<float>> inputDataBatch; // Flattened input batch
-    std::vector<std::vector<float>> outputDataBatch; // Flattened output batch
-    std::vector<std::vector<float>> conv2DCPU(const std::vector<std::vector<float>>& inputBatch, int imageHeight, int imageWidth);
-    void initializeWeights();
+    std::vector<std::vector<std::vector<std::vector<float>>>> gradWeights;
+    std::vector<float> gradBiases;
+    std::vector<std::vector<float>> inputDataBatch;
+    std::vector<std::vector<float>> outputDataBatch;
     std::vector<std::vector<AdamOptimizer>> weightOptimizers;
     AdamOptimizer biasOptimizer;
+    std::vector<std::vector<float>> conv2DCPU(const std::vector<std::vector<float>>& inputBatch, int imageHeight, int imageWidth);
+    void initializeWeights();
 };
 
 #endif // CONV_H

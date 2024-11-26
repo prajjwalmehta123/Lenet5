@@ -145,7 +145,7 @@ void dataloader::shuffle_data() {
 
     std::random_device rd;
     std::mt19937 g(rd());
-    std::ranges::shuffle(indices, g);
+    std::shuffle(indices.begin(),indices.end(), g);
 
     std::vector<std::vector<float>> shuffled_images(images.size());
     std::vector<int> shuffled_labels(labels.size());

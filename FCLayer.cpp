@@ -12,11 +12,48 @@ FCLayer::FCLayer() {
 
 // Constructor
 FCLayer::FCLayer(const std::pair<int, int>& weight_shape, const std::string& init_mode) {
+    #ifdef USE_CUDA
+    gpuImplementation = std::make_unique<FCLayerGPU>(weight_shape.second, weight_shape.first);
+    #endif
     int rows = weight_shape.first;
     int cols = weight_shape.second;
     // Initialize weights and biases
     std::tie(weight, bias) = initialize(rows, cols);
 }
+
+FCLayer::FCLayer(FCLayer&& other) noexcept 
+#ifdef USE_CUDA
+    : gpuImplementation(std::move(other.gpuImplementation))
+#else
+    : weight(std::move(other.weight))
+    , bias(std::move(other.bias))
+    , adam(std::move(other.adam))
+    , input_array(std::move(other.input_array))
+    , dW(std::move(other.dW))
+    , db(std::move(other.db))
+    , dA_prev(std::move(other.dA_prev))
+#endif
+{
+}
+
+// Move assignment operator
+FCLayer& FCLayer::operator=(FCLayer&& other) noexcept {
+    if (this != &other) {
+#ifdef USE_CUDA
+        gpuImplementation = std::move(other.gpuImplementation);
+#else
+        weight = std::move(other.weight);
+        bias = std::move(other.bias);
+        adam = std::move(other.adam);
+        input_array = std::move(other.input_array);
+        dW = std::move(other.dW);
+        db = std::move(other.db);
+        dA_prev = std::move(other.dA_prev);
+#endif
+    }
+    return *this;
+}
+
 
 // std::vector<std::vector<float>> FCLayer::transpose(const std::vector<std::vector<float>>& matrix) {
 //     int rows = matrix.size();
@@ -34,6 +71,9 @@ FCLayer::FCLayer(const std::pair<int, int>& weight_shape, const std::string& ini
 
 // Forward Propagation
 std::vector<std::vector<float>> FCLayer::forward_prop(const std::vector<std::vector<float>>& input_array) {
+    #ifdef USE_CUDA
+    return gpuImplementation->forward(input_array);
+    #else
     this->input_array = input_array; // Cache input for backpropagation
 
     int batch_size = input_array.size();
@@ -84,10 +124,14 @@ std::vector<std::vector<float>> FCLayer::forward_prop(const std::vector<std::vec
     //     }
     // }
     return output;
+    #endif
 }
 
 // Backward Propagation
 std::vector<std::vector<float>> FCLayer::back_prop(const std::vector<std::vector<float>>& dZ) {
+    #ifdef USE_CUDA
+    return gpuImplementation->backward(dZ);
+    #else
     int batch_size = dZ.size();
     int output_size = weight.size();       // Number of output neurons
     int input_size = weight[0].size();     // Number of input features
@@ -152,6 +196,7 @@ std::vector<std::vector<float>> FCLayer::back_prop(const std::vector<std::vector
     adam.update_bias(bias, db);
 
     return dA_prev;
+    #endif
 }
 
 // Initialize weights and biases
