@@ -3,6 +3,10 @@
 
 #include <vector>
 #include <omp.h>
+#ifdef USE_CUDA
+#include "subsampling_gpu.cuh"
+#include <memory>
+#endif
 
 class subsampling {
 public:
@@ -21,6 +25,9 @@ private:
     int stride;
     int num_feature_maps;
     int image_size;
+    #ifdef USE_CUDA
+    std::unique_ptr<SubsamplingGPU> gpuImplementation;
+    #endif
 
     // Variables to store forward pass data
     std::vector<std::vector<float>> inputDataBatch; // Stores input data for backward pass

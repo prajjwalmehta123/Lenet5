@@ -4,13 +4,26 @@ using namespace std;
 subsampling::subsampling() {
 }
 
-subsampling::subsampling(int kernel_size, int stride, int image_size, int num_feature_maps)
-    : kernel_size(kernel_size), stride(stride), image_size(image_size), num_feature_maps(num_feature_maps),
-      inputHeight(image_size), inputWidth(image_size),
-      pooledHeight((image_size - kernel_size) / stride + 1),
-      pooledWidth((image_size - kernel_size) / stride + 1) {}
-
+subsampling::subsampling(int kernel_size, int stride, int image_size, int num_feature_maps) {
+#ifdef USE_CUDA
+    gpuImplementation = std::make_unique<SubsamplingGPU>(kernel_size, stride, image_size, num_feature_maps);
+    output_image_size = gpuImplementation->getOutputSize();
+#else
+    this->kernel_size = kernel_size;
+    this->stride = stride;
+    this->image_size = image_size;
+    this->num_feature_maps = num_feature_maps;
+    this->inputHeight = image_size;
+    this->inputWidth = image_size;
+    this->pooledHeight = (image_size - kernel_size) / stride + 1;
+    this->pooledWidth = (image_size - kernel_size) / stride + 1;
+    this->output_image_size = pooledHeight;
+#endif
+}
 std::vector<std::vector<float>> subsampling::average_pooling(const vector<vector<float>>& inputBatch) {
+    #ifdef USE_CUDA
+    return gpuImplementation->forward(inputBatch);
+    #else
     inputDataBatch = inputBatch;
     size_t batch_size = inputBatch.size();
 
@@ -56,13 +69,16 @@ std::vector<std::vector<float>> subsampling::average_pooling(const vector<vector
         output[image_idx] = pooled_image;
     }
     return output;
+    #endif
 }
 
 
 std::vector<std::vector<float>> subsampling::backward(const std::vector<std::vector<float>>& gradOutputBatch) {
     size_t batchSize = gradOutputBatch.size();
     size_t totalInputSize = inputDataBatch[0].size();
-
+    #ifdef USE_CUDA
+    return gpuImplementation->backward(gradOutputBatch);
+    #else
     // Initialize gradInputBatch with zeros
     std::vector<std::vector<float>> gradInputBatch(batchSize, std::vector<float>(totalInputSize, 0.0f));
 
@@ -101,6 +117,7 @@ std::vector<std::vector<float>> subsampling::backward(const std::vector<std::vec
         }
     }
     return gradInputBatch;
+    #endif
 }
 
 
