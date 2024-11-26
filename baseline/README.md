@@ -5,3 +5,6 @@ We utilized two baselines for performance and accuracy comparison:
 	2.	Tensor_baseline: An implementation of LeNet using PyTorch tensors.
 
 Our program exceeds the performance of LeNet-from-Scratch, completing one epoch in approximately 20 seconds on both GPU and CPU while LeNet-from-Scratch takes 180 secs for one epoch and matches the accuracy of both baseline models.
+
+
+Our Approach, however is not as fast and efficient as the modern Pytorch implementation for Lenet5, but our GPU solution reaches a better accuracy of ~95% in one epoch, whereas the Pytorch implementation only reaches ~90%
