@@ -28,7 +28,7 @@ This repository contains a modern C++ implementation of the LeNet-5 convolutiona
 1. Clone the repository:
 ```bash
 git clone [repository-url]
-cd lenet5-implementation
+cd Lenet5
 ```
 
 2. Create a build directory:
