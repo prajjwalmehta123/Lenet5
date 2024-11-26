@@ -13,9 +13,44 @@ OutputLayer::OutputLayer(){};
 OutputLayer::OutputLayer(int outputSize, int inputSize)
     : weights(outputSize, std::vector<float>(inputSize, 0.0f)),
       biases(outputSize, 0.0f), numOutputs(outputSize), numInputs(inputSize) {
+    #ifdef USE_CUDA
+    gpuImplementation = std::make_unique<OutputLayerGPU>(outputSize, inputSize);
+    #endif
     initializeWeights();
     adam = AdamOptimizer(0.01, 0.9, 0.999, 1e-8);
     transposeWeights(); // Precompute the transposed weights
+}
+OutputLayer::OutputLayer(OutputLayer&& other) noexcept 
+#ifdef USE_CUDA
+    : gpuImplementation(std::move(other.gpuImplementation))
+#else
+    : weights(std::move(other.weights))
+    , biases(std::move(other.biases))
+    , input(std::move(other.input))
+    , adam(std::move(other.adam))
+    , numOutputs(other.numOutputs)
+    , numInputs(other.numInputs)
+    , weightsTransposed(std::move(other.weightsTransposed))
+#endif
+{
+}
+
+// Move assignment operator
+OutputLayer& OutputLayer::operator=(OutputLayer&& other) noexcept {
+    if (this != &other) {
+#ifdef USE_CUDA
+        gpuImplementation = std::move(other.gpuImplementation);
+#else
+        weights = std::move(other.weights);
+        biases = std::move(other.biases);
+        input = std::move(other.input);
+        adam = std::move(other.adam);
+        numOutputs = other.numOutputs;
+        numInputs = other.numInputs;
+        weightsTransposed = std::move(other.weightsTransposed);
+#endif
+    }
+    return *this;
 }
 
 // Transpose weights for cache-friendly access in backprop
@@ -31,6 +66,9 @@ void OutputLayer::transposeWeights() {
 
 // Forward Propagation
 std::vector<std::vector<float>> OutputLayer::forwardProp(const std::vector<std::vector<float>>& input) {
+    #ifdef USE_CUDA
+    return gpuImplementation->forward(input);
+    #endif
     this->input = input; // Cache input
     size_t batchSize = input.size();
     std::vector<std::vector<float>> z(batchSize, std::vector<float>(numOutputs, 0.0f));
@@ -60,6 +98,9 @@ std::vector<std::vector<float>> OutputLayer::forwardProp(const std::vector<std::
 
 // Backward Propagation
 std::vector<std::vector<float>> OutputLayer::backProp(const std::vector<std::vector<float>>& dLoss) {
+    #ifdef USE_CUDA
+    return gpuImplementation->backward(dLoss);
+    #endif
     size_t batchSize = input.size();
     std::vector<std::vector<float>> dWeights(numOutputs, std::vector<float>(numInputs, 0.0f));
     std::vector<float> dBiases(numOutputs, 0.0f);

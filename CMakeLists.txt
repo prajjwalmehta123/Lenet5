@@ -38,7 +38,7 @@ if(USE_CUDA)
         -O3 \
         --use_fast_math")
     # Add CUDA source
-    list(APPEND SOURCES conv_gpu.cu cuda_utils.cu fc_gpu.cu subsampling_gpu.cu activation_gpu.cu)
+    list(APPEND SOURCES conv_gpu.cu cuda_utils.cu fc_gpu.cu subsampling_gpu.cu activation_gpu.cu output_gpu.cu)
     
     # Set specific architecture for Tesla P4 (Compute Capability 6.1)
     set(CMAKE_CUDA_ARCHITECTURES 61)

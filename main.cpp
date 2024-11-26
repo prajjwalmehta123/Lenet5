@@ -69,14 +69,12 @@ int main()
                                 std::cout << "Epoch " << epoch << ", Step " << i 
                                         << " - Loss: " << lenet.compute_loss(x.second) << std::endl;
                         }
-                        // break;
                 }
                 
                 auto end = std::chrono::high_resolution_clock::now();
                 auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(end - start);
                 std::cout << "Time taken: " << duration.count()/1000 << " seconds" << std::endl;
                 dataloader_train.reset();
-                //break;
         }
         int correct = 0;
         dataloader dataloader_test(mnist_test_image_path,mnist_test_label_path,16, false);

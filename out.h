@@ -7,6 +7,11 @@
 #include <numeric>
 #include "adam.h"
 
+#ifdef USE_CUDA
+#include "output_gpu.cuh"
+#include <memory>
+#endif
+
 class OutputLayer {
 public:
     OutputLayer();
@@ -18,8 +23,20 @@ public:
 
     // Backward pass through the output layer
     std::vector<std::vector<float>> backProp(const std::vector<std::vector<float>>& dLoss);
+        // Move constructor and assignment
+    OutputLayer(OutputLayer&& other) noexcept;
+    OutputLayer& operator=(OutputLayer&& other) noexcept;
+    
+    // Delete copy operations
+    OutputLayer(const OutputLayer&) = delete;
+    OutputLayer& operator=(const OutputLayer&) = delete;
+
+
 
 private:
+    #ifdef USE_CUDA
+    std::unique_ptr<OutputLayerGPU> gpuImplementation;
+    #endif
 
     std::vector<std::vector<float>> weights; // 2D vector for weights
     std::vector<float> biases;              // 1D vector for biases
